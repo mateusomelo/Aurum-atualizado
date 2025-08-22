@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Usuários{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h2>
+            <i class="fas fa-users me-2"></i>Gerenciar Usuários
+        </h2>
+        <a href="{{ url_for('helpdesk.criar_usuario') }}" class="btn btn-primary">
+            <i class="fas fa-user-plus me-2"></i>Novo Usuário
+        </a>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mt-3">
+    <div class="col-md-6">
+        <input type="text" class="form-control" id="searchUsuarios" placeholder="Buscar por nome ou email...">
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" id="tipoFilter">
+            <option value="">Todos os tipos</option>
+            {% if session.user_type == 'administrador' %}
+            <option value="administrador">Administrador</option>
+            <option value="tecnico">Técnico</option>
+            {% endif %}
+            <option value="cliente">Cliente</option>
+        </select>
+    </div>
+</div>
+
+<!-- Lista de Usuários -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                {% if usuarios %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Telefone</th>
+                                <th>Empresa</th>
+                                <th>Tipo</th>
+                                <th>Data de Criação</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usuariosTable">
+                            {% for usuario in usuarios %}
+                            <tr data-tipo="{{ usuario.tipo_usuario }}">
+                                <td>
+                                    <strong>{{ usuario.nome }}</strong>
+                                </td>
+                                <td>{{ usuario.email }}</td>
+                                <td>{{ usuario.telefone }}</td>
+                                <td>
+                                    {% if usuario.empresa %}
+                                    <small class="text-info">{{ usuario.empresa.nome_empresa }}</small>
+                                    {% else %}
+                                    <small class="text-muted">Sem empresa</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if usuario.tipo_usuario == 'administrador' %}bg-danger
+                                        {% elif usuario.tipo_usuario == 'tecnico' %}bg-warning
+                                        {% else %}bg-info{% endif %}">
+                                        {{ usuario.tipo_usuario.title() }}
+                                    </span>
+                                </td>
+                                <td>{{ usuario.data_criacao.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('helpdesk.ver_usuario', usuario_id=usuario.id) }}" class="btn btn-outline-primary btn-sm" title="Ver Detalhes">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if session.user_type == 'administrador' %}
+                                        <a href="{{ url_for('helpdesk.editar_usuario', usuario_id=usuario.id) }}" class="btn btn-outline-warning btn-sm" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="POST" action="{{ url_for('helpdesk.desativar_usuario', usuario_id=usuario.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja desativar este usuário?')">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Desativar">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhum usuário encontrado</h5>
+                    <p class="text-muted">Quando usuários forem criados, eles aparecerão aqui.</p>
+                    <a href="{{ url_for('helpdesk.criar_usuario') }}" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-2"></i>Criar Primeiro Usuário
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estatísticas -->
+{% if usuarios %}
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-info">
+            <div class="card-body text-center">
+                <h4>{{ usuarios|selectattr('tipo_usuario', 'equalto', 'cliente')|list|length }}</h4>
+                <p class="mb-0">Clientes</p>
+            </div>
+        </div>
+    </div>
+    {% if session.user_type == 'administrador' %}
+    <div class="col-md-3">
+        <div class="card bg-warning">
+            <div class="card-body text-center">
+                <h4>{{ usuarios|selectattr('tipo_usuario', 'equalto', 'tecnico')|list|length }}</h4>
+                <p class="mb-0">Técnicos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger">
+            <div class="card-body text-center">
+                <h4>{{ usuarios|selectattr('tipo_usuario', 'equalto', 'administrador')|list|length }}</h4>
+                <p class="mb-0">Administradores</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="col-md-3">
+        <div class="card bg-success">
+            <div class="card-body text-center">
+                <h4>{{ usuarios|length }}</h4>
+                <p class="mb-0">Total</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Busca de usuários
+    const searchInput = document.getElementById('searchUsuarios');
+    const tipoFilter = document.getElementById('tipoFilter');
+    const table = document.getElementById('usuariosTable');
+    
+    function filterUsuarios() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedTipo = tipoFilter.value;
+        const rows = table.getElementsByTagName('tr');
+        
+        for (let row of rows) {
+            const nome = row.cells[0].textContent.toLowerCase();
+            const email = row.cells[1].textContent.toLowerCase();
+            const tipo = row.getAttribute('data-tipo');
+            
+            const matchesSearch = nome.includes(searchTerm) || email.includes(searchTerm);
+            const matchesTipo = selectedTipo === '' || tipo === selectedTipo;
+            
+            row.style.display = matchesSearch && matchesTipo ? '' : 'none';
+        }
+    }
+    
+    searchInput.addEventListener('input', filterUsuarios);
+    tipoFilter.addEventListener('change', filterUsuarios);
+});
+</script>
+{% endblock %}

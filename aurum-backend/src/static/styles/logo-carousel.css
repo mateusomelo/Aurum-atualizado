@@ -1,0 +1,60 @@
+/* Logo Carousel Styles */
+.clients-carousel-container {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    padding: 20px 0;
+    background-color: #f8fafc;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.clients-carousel-track {
+    display: flex;
+    width: fit-content; /* Important for continuous scroll */
+    animation: scroll-left 30s linear infinite;
+}
+
+.clients-carousel-track:hover {
+    animation-play-state: paused;
+}
+
+.client-logo {
+    height: 100px; /* Adjust as needed */
+    margin: 0 40px; /* Spacing between logos */
+    filter: grayscale(100%);
+    opacity: 0.6;
+    transition: all 0.3s ease;
+}
+
+.client-logo:hover {
+    filter: grayscale(0%);
+    opacity: 1;
+}
+
+@keyframes scroll-left {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%); /* Scrolls half the width to create infinite loop */
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .client-logo {
+        height: 60px;
+        margin: 0 20px;
+    }
+    @keyframes scroll-left {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(-50%);
+        }
+    }
+}
+
+

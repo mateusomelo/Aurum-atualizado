@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Responder Chamado #{{ chamado.id }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <!-- Resumo do Chamado -->
+        <div class="card">
+            <div class="card-header">
+                <h5>
+                    <i class="fas fa-ticket-alt me-2"></i>Chamado #{{ chamado.id }} - {{ chamado.titulo }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <p><strong>Descrição:</strong> {{ chamado.descricao }}</p>
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i>{{ chamado.usuario.nome }} | 
+                            <i class="fas fa-calendar me-1"></i>{{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge bg-{{ 'secondary' if chamado.prioridade == 'baixa' else 'warning' if chamado.prioridade == 'media' else 'danger' }} me-2">
+                            {{ chamado.prioridade.title() }}
+                        </span><br>
+                        <span class="badge {{ 'bg-danger' if chamado.status == 'aberto' else 'bg-warning' if chamado.status == 'em_andamento' else 'bg-success' }} mt-1">
+                            {{ chamado.status.replace('_', ' ').title() }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Formulário de Resposta -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>
+                    <i class="fas fa-reply me-2"></i>
+                    {% if session.user_type == 'cliente' %}
+                    Adicionar Mensagem
+                    {% else %}
+                    Adicionar Resposta
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="resposta" class="form-label">
+                            {% if session.user_type == 'cliente' %}
+                            Sua Mensagem *
+                            {% else %}
+                            Sua Resposta *
+                            {% endif %}
+                        </label>
+                        <textarea class="form-control" id="resposta" name="resposta" rows="6" required
+                                  placeholder="{% if session.user_type == 'cliente' %}Digite sua mensagem ou dúvida sobre o chamado...{% else %}Digite sua resposta detalhada para o chamado...{% endif %}"></textarea>
+                    </div>
+                    
+                    {% if session.user_type in ['administrador', 'tecnico'] %}
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Alterar Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="{{ chamado.status }}" selected>Manter atual ({{ chamado.status.replace('_', ' ').title() }})</option>
+                            {% if chamado.status == 'aberto' %}
+                            <option value="em_andamento">Em Andamento</option>
+                            {% elif chamado.status == 'em_andamento' %}
+                            <option value="aberto">Aberto</option>
+                            {% endif %}
+                        </select>
+                        <small class="form-text text-muted">
+                            Para finalizar um chamado, use o botão "Finalizar Chamado" específico onde você pode deixar uma mensagem.
+                        </small>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('helpdesk.ver_chamado', chamado_id=chamado.id) }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            {% if session.user_type == 'cliente' %}
+                            Enviar Mensagem
+                            {% else %}
+                            Enviar Resposta
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Respostas anteriores -->
+        {% if chamado.respostas %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6>
+                    <i class="fas fa-history me-2"></i>Histórico de Respostas
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for resposta in chamado.respostas %}
+                <div class="border-start border-3 border-primary ps-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>{{ resposta.usuario.nome }}</strong>
+                        <small class="text-muted">{{ resposta.data_resposta.strftime('%d/%m/%Y %H:%M') }}</small>
+                    </div>
+                    <p class="mb-0">{{ resposta.resposta }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

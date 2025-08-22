@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Serviços{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h2>
+            <i class="fas fa-cogs me-2"></i>Gerenciar Serviços
+        </h2>
+        <a href="{{ url_for('helpdesk.criar_servico') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Novo Serviço
+        </a>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mt-3">
+    <div class="col-md-8">
+        <input type="text" class="form-control" id="searchServicos" placeholder="Buscar por nome do serviço...">
+    </div>
+</div>
+
+<!-- Lista de Serviços -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                {% if servicos %}
+                <div class="row">
+                    {% for servico in servicos %}
+                    <div class="col-md-6 col-lg-4 mb-3" data-servico>
+                        <div class="card h-100 border-start border-3 border-primary">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="card-title">{{ servico.nome }}</h6>
+                                    <span class="badge bg-info">{{ servico.chamados|length }} chamados</span>
+                                </div>
+                                
+                                <div class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>{{ servico.data_criacao.strftime('%d/%m/%Y %H:%M') }}
+                                    </small>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('helpdesk.ver_servico', servico_id=servico.id) }}" class="btn btn-outline-primary btn-sm" title="Ver Detalhes">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('helpdesk.editar_servico', servico_id=servico.id) }}" class="btn btn-outline-warning btn-sm" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="POST" action="{{ url_for('helpdesk.desativar_servico', servico_id=servico.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja desativar este serviço?')">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Desativar">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhum serviço encontrado</h5>
+                    <p class="text-muted">Quando serviços forem criados, eles aparecerão aqui.</p>
+                    <a href="{{ url_for('helpdesk.criar_servico') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Criar Primeiro Serviço
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estatísticas -->
+{% if servicos %}
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-primary">
+            <div class="card-body text-center">
+                <h4>{{ servicos|length }}</h4>
+                <p class="mb-0">Total de Serviços</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success">
+            <div class="card-body text-center">
+                <h4>0</h4>
+                <p class="mb-0">Chamados de Serviços</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info">
+            <div class="card-body text-center">
+                <h4>0</h4>
+                <p class="mb-0">Serviços com Chamados</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning">
+            <div class="card-body text-center">
+                <h4>0</h4>
+                <p class="mb-0">Média de Chamados</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Busca de serviços
+    const searchInput = document.getElementById('searchServicos');
+    
+    function filterServicos() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const servicoCards = document.querySelectorAll('[data-servico]');
+        
+        servicoCards.forEach(function(card) {
+            const nome = card.querySelector('.card-title').textContent.toLowerCase();
+            
+            const matches = nome.includes(searchTerm);
+            card.style.display = matches ? '' : 'none';
+        });
+    }
+    
+    searchInput.addEventListener('input', filterServicos);
+});
+</script>
+{% endblock %}

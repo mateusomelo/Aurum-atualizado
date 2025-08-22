@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Chamado #{{ chamado.id }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>
+                    <i class="fas fa-ticket-alt me-2"></i>Chamado #{{ chamado.id }} - {{ chamado.titulo }}
+                </h5>
+                <div>
+                    <span class="badge bg-{{ 'secondary' if chamado.prioridade == 'baixa' else 'warning' if chamado.prioridade == 'media' else 'danger' }} me-2">
+                        {{ chamado.prioridade.title() }}
+                    </span>
+                    <span class="badge {{ 'bg-danger' if chamado.status == 'aberto' else 'bg-warning' if chamado.status == 'em_andamento' else 'bg-success' }}">
+                        {{ chamado.status.replace('_', ' ').title() }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Descrição:</h6>
+                    <p>{{ chamado.descricao }}</p>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i><strong>Criado por:</strong> {{ chamado.usuario.nome }}<br>
+                            <i class="fas fa-envelope me-1"></i><strong>Email:</strong> {{ chamado.usuario.email }}<br>
+                            <i class="fas fa-phone me-1"></i><strong>Telefone:</strong> {{ chamado.usuario.telefone }}
+                        </small>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i><strong>Data de Criação:</strong> {{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}<br>
+                            {% if chamado.tecnico %}
+                            <i class="fas fa-user-cog me-1"></i><strong>Técnico:</strong> {{ chamado.tecnico.nome }}<br>
+                            {% endif %}
+                            {% if chamado.data_finalizacao %}
+                            <i class="fas fa-check-circle me-1"></i><strong>Finalizado em:</strong> {{ chamado.data_finalizacao.strftime('%d/%m/%Y %H:%M') }}<br>
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+                
+                {% if chamado.empresa %}
+                <div class="mb-3">
+                    <h6>Empresa:</h6>
+                    <p><strong>{{ chamado.empresa.nome_empresa }}</strong><br>
+                    Organizador: {{ chamado.empresa.organizador }}<br>
+                    CNPJ: {{ chamado.empresa.cnpj }}</p>
+                </div>
+                {% endif %}
+                
+                {% if chamado.servico %}
+                <div class="mb-3">
+                    <h6>Serviço:</h6>
+                    <p><strong>{{ chamado.servico.nome }}</strong></p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Respostas -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>
+                    <i class="fas fa-comments me-2"></i>Respostas ({{ chamado.respostas|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if chamado.respostas %}
+                {% for resposta in chamado.respostas %}
+                <div class="border-bottom mb-3 pb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <strong>{{ resposta.usuario.nome }}</strong>
+                        <small class="text-muted">{{ resposta.data_resposta.strftime('%d/%m/%Y %H:%M') }}</small>
+                    </div>
+                    <p class="mb-0">{{ resposta.resposta }}</p>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-center py-3">
+                    <i class="fas fa-comment-slash fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">Nenhuma resposta ainda.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ações laterais -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6>Ações</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if session.user_type == 'administrador' %}
+                        <a href="{{ url_for('helpdesk.editar_chamado', chamado_id=chamado.id) }}" class="btn btn-warning">
+                            <i class="fas fa-edit me-2"></i>Editar Chamado
+                        </a>
+                        
+                        {% if chamado.status != 'finalizado' %}
+                        <a href="{{ url_for('helpdesk.finalizar_chamado', chamado_id=chamado.id) }}" class="btn btn-success">
+                            <i class="fas fa-check me-2"></i>Finalizar Chamado
+                        </a>
+                        {% endif %}
+                        
+                        {% if chamado.status != 'finalizado' %}
+                        <a href="{{ url_for('helpdesk.responder_chamado', chamado_id=chamado.id) }}" class="btn btn-primary">
+                            <i class="fas fa-reply me-2"></i>Responder
+                        </a>
+                        {% endif %}
+                    {% elif session.user_type == 'tecnico' and chamado.status != 'finalizado' %}
+                        {% if chamado.tecnico_id is none and chamado.status == 'aberto' %}
+                        <a href="{{ url_for('helpdesk.assumir_chamado', chamado_id=chamado.id) }}" class="btn btn-success">
+                            <i class="fas fa-hand-paper me-2"></i>Assumir Chamado
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('helpdesk.responder_chamado', chamado_id=chamado.id) }}" class="btn btn-primary">
+                            <i class="fas fa-reply me-2"></i>Responder
+                        </a>
+                    {% elif session.user_type == 'cliente' and chamado.usuario_id == session.user_id and chamado.status != 'finalizado' %}
+                        <a href="{{ url_for('helpdesk.responder_chamado', chamado_id=chamado.id) }}" class="btn btn-primary">
+                            <i class="fas fa-reply me-2"></i>Adicionar Mensagem
+                        </a>
+                    {% endif %}
+                    
+                    <a href="{% if session.user_type == 'administrador' %}{{ url_for('helpdesk.dashboard_admin') }}{% elif session.user_type == 'tecnico' %}{{ url_for('helpdesk.dashboard_tecnico') }}{% else %}{{ url_for('helpdesk.dashboard_cliente') }}{% endif %}" 
+                       class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Informações adicionais -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6>Status do Chamado</h6>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-2">
+                    {% if chamado.status == 'aberto' %}
+                    <div class="progress-bar bg-danger" style="width: 33%"></div>
+                    {% elif chamado.status == 'em_andamento' %}
+                    <div class="progress-bar bg-warning" style="width: 66%"></div>
+                    {% else %}
+                    <div class="progress-bar bg-success" style="width: 100%"></div>
+                    {% endif %}
+                </div>
+                
+                <small class="text-muted">
+                    {% if chamado.status == 'aberto' %}
+                    <i class="fas fa-clock me-1"></i>Aguardando atendimento
+                    {% elif chamado.status == 'em_andamento' %}
+                    <i class="fas fa-cog me-1"></i>Sendo atendido
+                    {% else %}
+                    <i class="fas fa-check-circle me-1"></i>Chamado finalizado
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

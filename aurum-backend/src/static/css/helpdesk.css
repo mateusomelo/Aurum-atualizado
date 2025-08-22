@@ -1,0 +1,121 @@
+/* Custom styles for the ticket system */
+
+/* Main Layout */
+body {
+    background-color: var(--bs-dark);
+    color: var(--bs-light);
+}
+
+/* Ticket Cards */
+.ticket-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.ticket-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Status indicators */
+.status-aberto {
+    border-left: 4px solid var(--bs-danger) !important;
+}
+
+.status-em_andamento {
+    border-left: 4px solid var(--bs-warning) !important;
+}
+
+.status-finalizado {
+    border-left: 4px solid var(--bs-success) !important;
+}
+
+/* Priority indicators */
+.priority-baixa {
+    border-top: 2px solid var(--bs-info);
+}
+
+.priority-media {
+    border-top: 2px solid var(--bs-warning);
+}
+
+.priority-alta {
+    border-top: 2px solid var(--bs-danger);
+}
+
+/* Dashboard cards */
+.dashboard-card {
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-card h3 {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+/* Forms */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+/* Navigation */
+.navbar-brand {
+    font-weight: bold;
+}
+
+/* Alerts */
+.alert {
+    border: none;
+    border-radius: 8px;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 6px;
+}
+
+/* Progress bars */
+.progress {
+    height: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .dashboard-card h3 {
+        font-size: 1.5rem;
+    }
+    
+    .ticket-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Animation for loading states */
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.loading {
+    animation: pulse 2s infinite;
+}
+
+/* Custom badge styles */
+.badge {
+    font-size: 0.75em;
+}
+
+/* Chart container */
+.chart-container {
+    position: relative;
+    height: 300px;
+}

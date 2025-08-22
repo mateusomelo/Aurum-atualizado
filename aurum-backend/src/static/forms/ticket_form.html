@@ -1,0 +1,45 @@
+<form id="ticketForm" class="form-container">
+    <input type="hidden" id="ticketId" name="id">
+    <div class="form-group">
+        <label for="ticketTitle">Título do Chamado</label>
+        <input type="text" id="ticketTitle" name="title" required>
+    </div>
+    <div class="form-group">
+        <label for="ticketDescription">Descrição</label>
+        <textarea id="ticketDescription" name="description" required></textarea>
+    </div>
+    <div class="form-group">
+        <label for="ticketClient">Cliente</label>
+        <select id="ticketClient" name="client_id" required>
+            <!-- Options will be loaded dynamically -->
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="ticketServiceType">Tipo de Serviço</label>
+        <select id="ticketServiceType" name="service_type_id" required>
+            <!-- Options will be loaded dynamically -->
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="ticketPriority">Prioridade</label>
+        <select id="ticketPriority" name="priority" required>
+            <option value="baixa">Baixa</option>
+            <option value="media">Média</option>
+            <option value="alta">Alta</option>
+            <option value="urgente">Urgente</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="ticketStatus">Status</label>
+        <select id="ticketStatus" name="status" required>
+            <option value="aberto">Aberto</option>
+            <option value="em_andamento">Em Andamento</option>
+            <option value="fechado">Fechado</option>
+        </select>
+    </div>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <button type="button" class="btn btn-secondary" id="cancelFormBtn">Cancelar</button>
+    </div>
+</form>
+

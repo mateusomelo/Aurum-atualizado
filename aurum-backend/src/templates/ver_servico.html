@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes do Serviço{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>
+                    <i class="fas fa-cogs me-2"></i>Detalhes do Serviço
+                </h4>
+                <div class="btn-group">
+                    <a href="{{ url_for('helpdesk.editar_servico', servico_id=servico.id) }}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit me-2"></i>Editar
+                    </a>
+                    <a href="{{ url_for('helpdesk.listar_servicos') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Nome do Serviço</label>
+                            <p class="fs-5">{{ servico.nome }}</p>
+                        </div>
+                        {% if servico.descricao %}
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Descrição</label>
+                            <p>{{ servico.descricao }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Data de Criação</label>
+                            <p>{{ servico.data_criacao.strftime('%d/%m/%Y %H:%M') }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Status</label>
+                            <p>
+                                <span class="badge {% if servico.ativo %}bg-success{% else %}bg-secondary{% endif %} fs-6">
+                                    {% if servico.ativo %}Ativo{% else %}Inativo{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Estatísticas -->
+                <hr>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="text-center">
+                            <h4 class="text-primary">{{ servico.chamados|length }}</h4>
+                            <small class="text-muted">Chamados Relacionados</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

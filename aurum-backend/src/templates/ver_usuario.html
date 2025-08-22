@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes do Usuário{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>
+                    <i class="fas fa-user me-2"></i>Detalhes do Usuário
+                </h4>
+                <div class="btn-group">
+                    {% if session.user_type == 'administrador' %}
+                    <a href="{{ url_for('helpdesk.editar_usuario', usuario_id=usuario.id) }}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit me-2"></i>Editar
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('helpdesk.listar_usuarios') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Nome</label>
+                            <p class="fs-5">{{ usuario.nome }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Email</label>
+                            <p>{{ usuario.email }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Telefone</label>
+                            <p>{{ usuario.telefone }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Tipo de Usuário</label>
+                            <p>
+                                <span class="badge {% if usuario.tipo_usuario == 'administrador' %}bg-danger{% elif usuario.tipo_usuario == 'tecnico' %}bg-warning{% else %}bg-primary{% endif %} fs-6">
+                                    {{ usuario.tipo_usuario.title() }}
+                                </span>
+                            </p>
+                        </div>
+                        {% if usuario.empresa %}
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Empresa</label>
+                            <p>{{ usuario.empresa.nome_empresa }}</p>
+                        </div>
+                        {% endif %}
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Data de Criação</label>
+                            <p>{{ usuario.data_criacao.strftime('%d/%m/%Y %H:%M') }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Status</label>
+                            <p>
+                                <span class="badge {% if usuario.ativo %}bg-success{% else %}bg-secondary{% endif %} fs-6">
+                                    {% if usuario.ativo %}Ativo{% else %}Inativo{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Estatísticas -->
+                <hr>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="text-primary">{{ usuario.chamados_criados|length }}</h4>
+                            <small class="text-muted">Chamados Criados</small>
+                        </div>
+                    </div>
+                    {% if usuario.tipo_usuario in ['administrador', 'tecnico'] %}
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="text-success">{{ usuario.chamados_atendidos|length }}</h4>
+                            <small class="text-muted">Chamados Atendidos</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

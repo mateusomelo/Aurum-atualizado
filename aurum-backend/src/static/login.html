@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Aurum</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/styles/login.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h1>Sistema de Chamados</h1>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="username">Usuário:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Senha:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit">Entrar</button>
+            </form>
+            <div id="error-message" class="error-message"></div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard hidden">
+        <header class="header">
+            <h1>Sistema de Chamados</h1>
+            <div class="user-info">
+                <span id="userWelcome"></span>
+                <button onclick="logout()">Sair</button>
+            </div>
+        </header>
+
+        <nav class="sidebar">
+            <ul>
+                <li><a href="#" onclick="showSection('dashboard-home')">Painel</a></li>
+                <li id="nav-users" class="admin-only hidden"><a href="#" onclick="showSection('users')">Usuários</a></li>
+                <li id="nav-clients" class="admin-tecnico-only hidden"><a href="#" onclick="showSection('clients')">Clientes</a></li>
+                <li id="nav-services" class="admin-only hidden"><a href="#" onclick="showSection('services')">Serviços</a></li>
+                <li id="nav-tickets" class="admin-tecnico-only hidden"><a href="#" onclick="showSection('tickets')">Chamados</a></li>
+            </ul>
+        </nav>
+
+        <main class="main-content">
+            <!-- Dashboard Home -->
+            <section id="dashboard-home" class="content-section active">
+                <!-- Painel Administrativo -->
+                <div id="admin-stats" class="admin-only hidden">
+                    <div class="admin-dashboard">
+                        <h2>Meu Painel</h2>
+                        
+                        <!-- Gráficos -->
+                        <div class="charts-container">
+                            <div class="chart-wrapper">
+                                <h3>Chamados recebidos nos últimos 7 dias</h3>
+                                <canvas id="ticketsChart" width="400" height="200"></canvas>
+                            </div>
+                            <div class="chart-wrapper">
+                                <h3>Atendimentos online realizados nos últimos 7 dias</h3>
+                                <canvas id="attendanceChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Contadores -->
+                        <div class="counters-container">
+                            <div class="counter-item novos">
+                                <span class="counter-number" id="novosCount">1</span>
+                                <span class="counter-label">Novos Chamados</span>
+                            </div>
+                            <div class="counter-item respondidos">
+                                <span class="counter-number" id="respondidosCount">0</span>
+                                <span class="counter-label">Chamados Respondidos</span>
+                            </div>
+                            <div class="counter-item abertos">
+                                <span class="counter-number" id="abertosCount">2</span>
+                                <span class="counter-label">Abertos</span>
+                            </div>
+                            <div class="counter-item finalizados">
+                                <span class="counter-number" id="finalizadosCount">0</span>
+                                <span class="counter-label">Chamados Finalizados</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Tabela de Chamados -->
+                        <div class="admin-tickets-table">
+                            <table id="adminDashboardTable">
+                                <thead>
+                                    <tr>
+                                        <th>Protocolo</th>
+                                        <th>Assunto</th>
+                                        <th>Departamento</th>
+                                        <th>Cliente</th>
+                                        <th>Organização</th>
+                                        <th>Categoria</th>
+                                        <th>Data/Hora</th>
+                                        <th>Deadline</th>
+                                        <th>Status</th>
+                                        <th>Situação</th>
+                                        <th>Atendente</th>
+                                        <th>SLA</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Chamados serão carregados aqui -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Painel para Técnico -->
+                <div id="tecnico-stats" class="tecnico-only">
+                    <div class="admin-dashboard">
+                        <h2>Meu Painel</h2>
+                        
+                        <!-- Gráficos -->
+                        <div class="charts-container">
+                            <div class="chart-wrapper">
+                                <h3>Chamados recebidos nos últimos 7 dias</h3>
+                                <canvas id="ticketsChartTec" width="400" height="200"></canvas>
+                            </div>
+                            <div class="chart-wrapper">
+                                <h3>Atendimentos online realizados nos últimos 7 dias</h3>
+                                <canvas id="attendanceChartTec" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Contadores -->
+                        <div class="counters-container">
+                            <div class="counter-item novos">
+                                <span class="counter-number" id="novosCountTec">0</span>
+                                <span class="counter-label">Novos Chamados</span>
+                            </div>
+                            <div class="counter-item respondidos">
+                                <span class="counter-number" id="respondidosCountTec">0</span>
+                                <span class="counter-label">Chamados Respondidos</span>
+                            </div>
+                            <div class="counter-item abertos">
+                                <span class="counter-number" id="abertosCountTec">0</span>
+                                <span class="counter-label">Abertos</span>
+                            </div>
+                            <div class="counter-item finalizados">
+                                <span class="counter-number" id="finalizadosCountTec">0</span>
+                                <span class="counter-label">Chamados Finalizados</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Tabela de Chamados -->
+                        <div class="admin-tickets-table">
+                            <table id="tecnicoDashboardTable">
+                                <thead>
+                                    <tr>
+                                        <th>Protocolo</th>
+                                        <th>Assunto</th>
+                                        <th>Departamento</th>
+                                        <th>Cliente</th>
+                                        <th>Organização</th>
+                                        <th>Categoria</th>
+                                        <th>Data/Hora</th>
+                                        <th>Deadline</th>
+                                        <th>Status</th>
+                                        <th>Situação</th>
+                                        <th>Atendente</th>
+                                        <th>SLA</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Chamados serão carregados aqui -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estatísticas para User -->
+                <div id="user-stats" class="user-only">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Meus Chamados</h3>
+                            <span id="myTickets">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Chamados Abertos</h3>
+                            <span id="myOpenTickets">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Chamados Finalizados</h3>
+                            <span id="myFinishedTickets">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Último Chamado</h3>
+                            <span id="lastTicketDate">-</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Seção de Chamados para User -->
+                    <div class="user-tickets-section">
+                        <div class="section-header">
+                            <h3>Meus Chamados</h3>
+                            <button class="btn-primary" onclick="showTicketModal()">Novo Chamado</button>
+                        </div>
+                        
+                        <!-- Filtros para User -->
+                        <div class="tickets-filters">
+                            <button class="filter-btn active" onclick="filterUserTickets('todos')">Todos</button>
+                            <button class="filter-btn" onclick="filterUserTickets('abertos')">Abertos</button>
+                            <button class="filter-btn" onclick="filterUserTickets('fechados')">Fechados</button>
+                        </div>
+                        
+                        <div class="tickets-container">
+                            <div id="userTicketsList" class="tickets-list">
+                                <!-- Chamados serão carregados aqui -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Users Section (Admin Only) -->
+            <section id="users" class="content-section">
+                <h2>Gestão de Usuários</h2>
+                <button id="btn-new-user" class="btn-primary admin-tecnico-only hidden" onclick="showUserModal()">Novo Usuário</button>
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Username</th>
+                            <th>Tipo</th>
+                            <th>Cliente Vinculado</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+
+            <!-- Clients Section -->
+            <section id="clients" class="content-section">
+                <div class="clients-modern-layout">
+                    <!-- Sidebar de Clientes -->
+                    <div class="clients-sidebar">
+                        <div class="sidebar-header">
+                            <h3>🏢 Clientes</h3>
+                        </div>
+                        <ul class="clients-nav">
+                            <li class="nav-item active" onclick="showClientsView('clientes')">
+                                <span>Clientes</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Conteúdo Principal -->
+                    <div class="clients-main-content">
+                        <div class="clients-header">
+                            <h2>Clientes</h2>
+                            <div class="clients-actions">
+                                <select class="filter-select">
+                                    <option>Filtrar por</option>
+                                    <option>Ativos</option>
+                                    <option>Inativos</option>
+                                </select>
+                                <select class="order-select">
+                                    <option>Ordenar por</option>
+                                    <option>Nome A-Z</option>
+                                    <option>Nome Z-A</option>
+                                    <option>Data</option>
+                                </select>
+                                <button class="btn-criar-cliente" onclick="showClientModal()">Criar Cliente</button>
+                            </div>
+                        </div>
+                        
+                        <div class="clients-table-container">
+                            <table id="clientsModernTable">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" class="select-all"></th>
+                                        <th>Nome</th>
+                                        <th>Organização</th>
+                                        <th>Telefone</th>
+                                        <th>Opções</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Clientes serão carregados aqui -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Services Section -->
+            <section id="services" class="content-section">
+                <h2>Gestão de Serviços</h2>
+                <button id="btn-new-service" class="btn-primary admin-only hidden" onclick="showServiceModal()">Novo Serviço</button>
+                <table id="servicesTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Descrição</th>
+                            <th>Categoria</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+
+            <!-- Tickets Section -->
+            <section id="tickets" class="content-section">
+                <h2>Gestão de Chamados</h2>
+                <button class="btn-primary" onclick="showTicketModal()">Novo Chamado</button>
+                
+                <!-- Filtros para Admin/Técnico -->
+                <div class="tickets-filters admin-tecnico-only">
+                    <button class="filter-btn active" onclick="filterTicketsTable('todos')">Todos</button>
+                    <button class="filter-btn" onclick="filterTicketsTable('abertos')">Abertos</button>
+                    <button class="filter-btn" onclick="filterTicketsTable('fechados')">Fechados</button>
+                </div>
+                
+                <table id="ticketsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Assunto</th>
+                            <th>Cliente</th>
+                            <th>Serviço</th>
+                            <th>Data/Hora</th>
+                            <th>Atendente</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('userModal')">&times;</span>
+            <h2>Usuário</h2>
+            <form id="userForm">
+                <input type="hidden" id="editUserId">
+                <div class="input-group">
+                    <label for="userName">Nome:</label>
+                    <input type="text" id="userName" required>
+                </div>
+                <div class="input-group">
+                    <label for="userUsername">Username:</label>
+                    <input type="text" id="userUsername" required>
+                </div>
+                <div class="input-group">
+                    <label for="userPassword">Senha:</label>
+                    <input type="password" id="userPassword" required>
+                </div>
+                <div class="input-group">
+                    <label for="userType">Tipo:</label>
+                    <select id="userType" required>
+                        <option value="user">Usuário</option>
+                        <option value="tecnico">Técnico</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+                <div class="input-group" id="clientLinkGroup">
+                    <label for="userClient">Cliente Vinculado:</label>
+                    <select id="userClient">
+                        <option value="">Nenhum cliente</option>
+                    </select>
+                    <small>Vincule este usuário a um cliente específico (opcional)</small>
+                </div>
+                <button type="submit">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="clientModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('clientModal')">&times;</span>
+            <h2>Cliente</h2>
+            <form id="clientForm">
+                <input type="hidden" id="editClientId">
+                <div class="input-group">
+                    <label for="clientName">Nome:</label>
+                    <input type="text" id="clientName" required>
+                </div>
+                <div class="input-group">
+                    <label for="clientEmail">Email:</label>
+                    <input type="email" id="clientEmail" required>
+                </div>
+                <div class="input-group">
+                    <label for="clientPhone">Telefone:</label>
+                    <input type="text" id="clientPhone">
+                </div>
+                <div class="input-group">
+                    <label for="clientCompany">Empresa:</label>
+                    <input type="text" id="clientCompany">
+                </div>
+                <button type="submit">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="serviceModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('serviceModal')">&times;</span>
+            <h2>Serviço</h2>
+            <form id="serviceForm">
+                <input type="hidden" id="editServiceId">
+                <div class="input-group">
+                    <label for="serviceName">Nome:</label>
+                    <input type="text" id="serviceName" required>
+                </div>
+                <div class="input-group">
+                    <label for="serviceDescription">Descrição:</label>
+                    <textarea id="serviceDescription" required></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="serviceCategory">Categoria:</label>
+                    <select id="serviceCategory" required>
+                        <option value="hardware">Hardware</option>
+                        <option value="software">Software</option>
+                        <option value="rede">Rede</option>
+                        <option value="manutencao">Manutenção</option>
+                        <option value="instalacao">Instalação</option>
+                    </select>
+                </div>
+                <button type="submit">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="ticketModal" class="modal">
+        <div class="modal-content">
+            <div class="chamado-header">
+                <h2 class="chamado-title" id="ticketTitle">Vincular Chamado</h2>
+                <div class="chamado-actions">
+                    <div class="mais-dropdown-container" id="ticketMaisContainer" style="display: none;">
+                        <button type="button" class="btn-mais-chamado" onclick="toggleTicketMaisDropdown()" id="ticketMaisBtn">
+                            Mais ▼
+                        </button>
+                        <div class="mais-dropdown" id="ticketMaisDropdown">
+                            <div class="mais-dropdown-item" onclick="deleteTicketFromModal()">🗑️ Excluir</div>
+                            <div class="mais-dropdown-item" onclick="closeModal('ticketModal')">❌ Cancelar</div>
+                            <div class="mais-dropdown-item" onclick="printTicket()">🖨️ Imprimir</div>
+                            <div class="mais-dropdown-item" onclick="toggleEditMode()">✏️ Editar</div>
+                            <div class="mais-dropdown-item" onclick="viewTicketHistory()">📋 Histórico</div>
+                            <div class="mais-dropdown-item admin-only" onclick="reassignTicket()">👤 Reatribuir</div>
+                            <div class="mais-dropdown-item admin-only" onclick="changeTicketPriority()">⚡ Prioridade</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-cancelar-chamado" onclick="closeModal('ticketModal')">Cancelar</button>
+                    <span class="close" onclick="closeModal('ticketModal')">&times;</span>
+                </div>
+            </div>
+            
+            <form id="ticketForm">
+                <input type="hidden" id="editTicketId">
+                
+                <div class="ticket-form-grid">
+                    <div class="input-group ticket-form-full">
+                        <label for="ticketDescription">Mensagem:</label>
+                        <textarea id="ticketDescription" rows="3" placeholder="Descreva o problema ou solicitação" required></textarea>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="ticketPriority">Prioridade:</label>
+                        <select id="ticketPriority" required>
+                            <option value="">Selecione a prioridade</option>
+                            <option value="baixa">Baixa</option>
+                            <option value="media">Média</option>
+                            <option value="alta">Alta</option>
+                            <option value="critica">Crítica</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="ticketClient">Cliente:</label>
+                        <select id="ticketClient" required>
+                            <option value="">Selecione um cliente</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="ticketEmail">Email:</label>
+                        <input type="email" id="ticketEmail" placeholder="Digite o email do cliente">
+                    </div>
+                </div>
+                
+                <!-- Seção de Atendente -->
+                <div class="input-group">
+                    <label for="ticketAttendant">Atendente:</label>
+                    <select id="ticketAttendant" style="width: 300px;">
+                        <option value="">Sem atendente</option>
+                        <option value="matteus-oliveira">Matteus Oliveira</option>
+                        <option value="rodrigo-filho">Rodrigo Filho</option>
+                    </select>
+                </div>
+                
+                <!-- Seção de Respostas -->
+                <div id="ticketResponsesSection" class="responses-section" style="display: none;">
+                    <label>Histórico de Conversação:</label>
+                    <div id="ticketResponses" class="responses-container">
+                        <!-- Respostas serão carregadas aqui -->
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="newResponse">Nova Resposta:</label>
+                        <textarea id="newResponse" placeholder="Digite sua resposta aqui..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="ticketService">Serviço:</label>
+                    <select id="ticketService" required></select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="ticketTitle">Assunto:</label>
+                    <input type="text" id="ticketTitle" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="ticketStatus">Status:</label>
+                    <select id="ticketStatus" required>
+                        <option value="aberto">Aberto</option>
+                        <option value="andamento">Em Andamento</option>
+                        <option value="aguardando">Aguardando Cliente</option>
+                        <option value="fechado">Fechado</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button type="submit" style="background: #38a169;">Excluir</button>
+                    <button type="button" onclick="closeModal('ticketModal')" style="background: #718096;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalhado para Admin/Técnico -->
+    <div id="detailedTicketModal" class="modal">
+        <div class="modal-content detailed-modal">
+            <div class="chamado-header">
+                <h2 class="chamado-title" id="detailedTicketTitle">Vincular Chamado: #255 - edes caravelas</h2>
+                <div class="chamado-actions">
+                    <button type="button" class="btn-excluir-chamado" id="deleteTicketBtn">Excluir</button>
+                    <button type="button" class="btn-cancelar-chamado" onclick="closeModal('detailedTicketModal')">Cancelar</button>
+                    <span class="close" onclick="closeModal('detailedTicketModal')">&times;</span>
+                </div>
+            </div>
+            
+            <div id="detailedTicketContent">
+                <div class="ticket-form-grid">
+                    <div class="input-group ticket-form-full">
+                        <label for="detailedMessage">Mensagem:</label>
+                        <textarea id="detailedMessage" rows="3" readonly></textarea>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="detailedPriority">Prioridade:</label>
+                        <select id="detailedPriority" disabled>
+                            <option value="baixa">Baixa</option>
+                            <option value="media">Média</option>
+                            <option value="alta">Alta</option>
+                            <option value="critica">Crítica</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="detailedClient">Cliente:</label>
+                        <select id="detailedClient" disabled>
+                            <option value="hotel-caravelas">Hotel Caravelas</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="detailedEmail">Email:</label>
+                        <input type="email" id="detailedEmail" placeholder="Digite o email do cliente">
+                    </div>
+                </div>
+                
+                <!-- Seção de Atendente -->
+                <div class="input-group">
+                    <label for="detailedAttendant">Atendente:</label>
+                    <select id="detailedAttendant" style="width: 300px;">
+                        <option value="">Sem atendente</option>
+                        <option value="matteus-oliveira">Matteus Oliveira</option>
+                        <option value="rodrigo-filho">Rodrigo Filho</option>
+                    </select>
+                </div>
+                
+                <!-- Seção de Respostas -->
+                <div id="detailedResponsesSection" class="responses-section">
+                    <label>Histórico de Conversação:</label>
+                    <div id="detailedResponses" class="responses-container">
+                        <!-- Respostas serão carregadas aqui -->
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="detailedNewResponse">Nova Resposta:</label>
+                        <textarea id="detailedNewResponse" placeholder="Digite sua resposta aqui..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="detailedStatus">Status:</label>
+                    <select id="detailedStatus">
+                        <option value="aberto">Aberto</option>
+                        <option value="andamento">Em Andamento</option>
+                        <option value="aguardando">Aguardando Cliente</option>
+                        <option value="fechado">Fechado</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button type="button" id="saveChangesBtn" style="background: #38a169; color: white; border: none; padding: 12px 30px; border-radius: 4px; cursor: pointer;">Vincular</button>
+                    <button type="button" onclick="closeModal('detailedTicketModal')" style="background: #718096; color: white; border: none; padding: 12px 30px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/scripts/login.js"></script>
+</body>
+</html>
+
