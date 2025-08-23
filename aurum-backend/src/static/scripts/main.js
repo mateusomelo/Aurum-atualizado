@@ -136,29 +136,21 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
     
-    // Contact form handling
+    // EmailJS Configuration - CONFIGURE ESTES VALORES APÓS CRIAR SUA CONTA
+    const EMAILJS_CONFIG = {
+        serviceID: 'service_tonz2t8',      // Ex: 'service_abc123'
+        templateID: 'template_nfbgifo',    // Ex: 'template_def456'
+        publicKey: 'czv_mghrVuYGt97EH'       // Ex: 'ghi789jkl012'
+    };
+
+    // Initialize EmailJS
+    emailjs.init(EMAILJS_CONFIG.publicKey);
+
+    // Contact form handling com EmailJS
     const contactForm = document.getElementById("contactForm");
     if (contactForm) {
         contactForm.addEventListener("submit", function(e) {
             e.preventDefault();
-            
-            const formData = new FormData(this);
-            const data = {
-                name: formData.get("name"),
-                email: formData.get("email"),
-                message: formData.get("message")
-            };
-            
-            // Basic validation
-            if (!data.name || !data.email || !data.message) {
-                showMessage("Por favor, preencha todos os campos.", "error");
-                return;
-            }
-            
-            if (!isValidEmail(data.email)) {
-                showMessage("Por favor, insira um email válido.", "error");
-                return;
-            }
             
             // Show loading state
             const submitBtn = this.querySelector("button[type=\"submit\"]");
@@ -166,13 +158,30 @@ document.addEventListener("DOMContentLoaded", function() {
             submitBtn.textContent = "Enviando...";
             submitBtn.disabled = true;
             
-            // Simulate form submission (replace with actual API call)
-            setTimeout(() => {
-                showMessage("Mensagem enviada com sucesso! Entraremos em contato em breve.", "success");
-                contactForm.reset();
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }, 2000);
+            // Get form data
+            const now = new Date();
+            const formData = {
+                from_name: document.getElementById('name').value,
+                from_email: document.getElementById('email').value,
+                subject: document.getElementById('subject').value,
+                message: document.getElementById('message').value,
+                to_email: 'contato@aurum.inf.br',
+                current_date: now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR')
+            };
+            
+            // Send email via EmailJS
+            emailjs.send(EMAILJS_CONFIG.serviceID, EMAILJS_CONFIG.templateID, formData)
+                .then(function(response) {
+                    showMessage("✅ Mensagem enviada com sucesso! Entraremos em contato em breve.", "success");
+                    contactForm.reset();
+                }, function(error) {
+                    console.error('EmailJS Error:', error);
+                    showMessage("❌ Erro ao enviar mensagem. Tente novamente.", "error");
+                })
+                .finally(() => {
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                });
         });
     }
     
