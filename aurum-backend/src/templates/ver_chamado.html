@@ -123,6 +123,10 @@
                         </a>
                         {% endif %}
                         
+                        <a href="{{ url_for('helpdesk.finalizar_chamado', chamado_id=chamado.id) }}" class="btn btn-success">
+                            <i class="fas fa-check me-2"></i>Finalizar Chamado
+                        </a>
+                        
                         <a href="{{ url_for('helpdesk.responder_chamado', chamado_id=chamado.id) }}" class="btn btn-primary">
                             <i class="fas fa-reply me-2"></i>Responder
                         </a>
