@@ -385,7 +385,7 @@ def editar_chamado(chamado_id):
 
 @helpdesk_bp.route('/chamado/<int:chamado_id>/finalizar', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@admin_or_tecnico_required
 def finalizar_chamado(chamado_id):
     chamado = Chamado.query.get_or_404(chamado_id)
     
