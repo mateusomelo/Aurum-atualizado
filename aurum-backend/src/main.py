@@ -20,6 +20,7 @@ from src.routes.service_types import service_types_bp
 from src.routes.contact import contact_bp
 from src.models.helpdesk_models import Usuario, Empresa, Servico, Chamado, RespostaChamado
 from src.routes.helpdesk import helpdesk_bp
+from src.routes.cache_management import cache_bp, init_cache_cleaner
 from werkzeug.security import generate_password_hash
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
@@ -39,6 +40,7 @@ app.register_blueprint(clients_bp, url_prefix='/api')
 app.register_blueprint(service_types_bp, url_prefix='/api')
 app.register_blueprint(contact_bp, url_prefix='/api')
 app.register_blueprint(helpdesk_bp)
+app.register_blueprint(cache_bp)
 
 # APIs para os filtros dos relatórios
 @app.route('/helpdesk/dados/empresas')
@@ -72,6 +74,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirnam
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
+
+# Inicializar sistema de limpeza de cache
+cache_cleaner = init_cache_cleaner(app)
+cache_cleaner.start_scheduler()
 
 with app.app_context():
     db.create_all()

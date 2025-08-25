@@ -8,3 +8,4 @@ flask_bcrypt==1.0.1
 reportlab==4.0.4
 openpyxl==3.1.2
 xlsxwriter==3.1.9
+schedule==1.2.0
