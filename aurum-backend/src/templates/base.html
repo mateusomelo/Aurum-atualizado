@@ -18,21 +18,28 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/helpdesk.css') }}">
 </head>
 <body>
-    <!-- Admin Sidebar -->
-    {% if session.user_id and session.user_type == 'administrador' %}
+    <!-- User Sidebar -->
+    {% if session.user_id %}
     <div class="admin-sidebar" id="adminSidebar">
         <div class="admin-sidebar-header">
-            <h4><i class="fas fa-ticket-alt me-2"></i>Painel Admin</h4>
+            <h4><i class="fas fa-ticket-alt me-2"></i>
+                {% if session.user_type == 'administrador' %}Painel Admin
+                {% elif session.user_type == 'tecnico' %}Painel Técnico
+                {% else %}Painel Cliente
+                {% endif %}
+            </h4>
         </div>
         
         <ul class="admin-sidebar-nav">
             <!-- Dashboard -->
             <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('helpdesk.dashboard_admin') }}">
+                <a class="nav-link" href="{% if session.user_type == 'administrador' %}{{ url_for('helpdesk.dashboard_admin') }}{% elif session.user_type == 'tecnico' %}{{ url_for('helpdesk.dashboard_tecnico') }}{% else %}{{ url_for('helpdesk.dashboard_cliente') }}{% endif %}">
                     <i class="fas fa-tachometer-alt"></i>Dashboard
                 </a>
             </li>
             
+            {% if session.user_type == 'administrador' %}
+            <!-- Menu completo do Administrador -->
             <!-- Usuários -->
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="{{ url_for('helpdesk.listar_usuarios') }}" role="button" data-bs-toggle="collapse" data-bs-target="#usuariosMenu" aria-expanded="false">
@@ -118,6 +125,66 @@
                 </div>
             </li>
             
+            {% elif session.user_type == 'tecnico' %}
+            <!-- Menu do Técnico -->
+            <!-- Clientes -->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="{{ url_for('helpdesk.listar_usuarios') }}" role="button" data-bs-toggle="collapse" data-bs-target="#clientesMenu" aria-expanded="false">
+                    <i class="fas fa-users"></i>Clientes
+                </a>
+                <div class="collapse" id="clientesMenu">
+                    <ul class="admin-sidebar-submenu">
+                        <li><a class="nav-link" href="{{ url_for('helpdesk.listar_usuarios') }}">
+                            <i class="fas fa-list"></i>Listar Clientes
+                        </a></li>
+                        <li><a class="nav-link" href="{{ url_for('helpdesk.criar_usuario') }}">
+                            <i class="fas fa-user-plus"></i>Criar Cliente
+                        </a></li>
+                    </ul>
+                </div>
+            </li>
+            
+            <!-- Empresas -->
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('helpdesk.listar_empresas') }}">
+                    <i class="fas fa-building"></i>Empresas
+                </a>
+            </li>
+            
+            <!-- Chamados -->
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('helpdesk.listar_chamados') }}">
+                    <i class="fas fa-ticket-alt"></i>Chamados
+                </a>
+            </li>
+            
+            <!-- Relatórios -->
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('helpdesk.relatorios') }}">
+                    <i class="fas fa-chart-line"></i>Relatórios
+                </a>
+            </li>
+            
+            {% else %}
+            <!-- Menu do Cliente -->
+            <!-- Meus Chamados -->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="{{ url_for('helpdesk.listar_chamados') }}" role="button" data-bs-toggle="collapse" data-bs-target="#meusChamadosMenu" aria-expanded="false">
+                    <i class="fas fa-ticket-alt"></i>Meus Chamados
+                </a>
+                <div class="collapse" id="meusChamadosMenu">
+                    <ul class="admin-sidebar-submenu">
+                        <li><a class="nav-link" href="{{ url_for('helpdesk.listar_chamados') }}">
+                            <i class="fas fa-list"></i>Ver Chamados
+                        </a></li>
+                        <li><a class="nav-link" href="{{ url_for('helpdesk.criar_chamado') }}">
+                            <i class="fas fa-plus"></i>Criar Chamado
+                        </a></li>
+                    </ul>
+                </div>
+            </li>
+            {% endif %}
+            
         </ul>
     </div>
     
@@ -132,8 +199,8 @@
 
     <!-- Navigation -->
     {% if session.user_id %}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark {% if session.user_type == 'administrador' %}admin-navbar{% endif %}">
-        <div class="{% if session.user_type == 'administrador' %}container-fluid{% else %}container{% endif %}">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark admin-navbar">
+        <div class="container-fluid">
             <a class="navbar-brand" href="#">
                 <i class="fas fa-ticket-alt me-2"></i>Sistema de Chamados
             </a>
@@ -144,54 +211,7 @@
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    {% if session.user_type == 'administrador' %}
-                    <!-- Menu limpo para administrador - itens estão na sidebar -->
-                    {% elif session.user_type == 'tecnico' %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('helpdesk.dashboard_tecnico') }}">
-                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('helpdesk.listar_usuarios') }}">
-                            <i class="fas fa-users me-1"></i>Clientes
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('helpdesk.listar_empresas') }}">
-                            <i class="fas fa-building me-1"></i>Empresas
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('helpdesk.listar_chamados') }}">
-                            <i class="fas fa-ticket-alt me-1"></i>Chamados
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('helpdesk.relatorios') }}">
-                            <i class="fas fa-chart-line me-1"></i>Relatórios
-                        </a>
-                    </li>
-                    {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('helpdesk.dashboard_cliente') }}">
-                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('helpdesk.listar_chamados') }}">
-                            <i class="fas fa-ticket-alt me-1"></i>Meus Chamados
-                        </a>
-                    </li>
-                    {% endif %}
-                    
-                    {% if session.user_type != 'administrador' %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('helpdesk.criar_chamado') }}">
-                            <i class="fas fa-plus me-1"></i>Criar Chamado
-                        </a>
-                    </li>
-                    {% endif %}
+                    <!-- Menu limpo - itens estão na sidebar -->
                 </ul>
                 
                 <ul class="navbar-nav">
@@ -212,7 +232,7 @@
     {% endif %}
 
     <!-- Flash Messages -->
-    <div class="{% if session.user_type == 'administrador' %}admin-flash-messages{% else %}container{% endif %} mt-3">
+    <div class="admin-flash-messages mt-3">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         {% for category, message in messages %}
@@ -226,14 +246,10 @@
     </div>
 
     <!-- Main Content -->
-    <div class="{% if session.user_type == 'administrador' %}admin-main-content{% else %}container mt-4{% endif %}">
-        {% if session.user_type == 'administrador' %}
+    <div class="admin-main-content">
         <div class="container-fluid">
-        {% endif %}
             {% block content %}{% endblock %}
-        {% if session.user_type == 'administrador' %}
         </div>
-        {% endif %}
     </div>
 
     <!-- Bootstrap JS -->
