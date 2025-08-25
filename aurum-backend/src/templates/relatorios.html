@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>
+            <i class="fas fa-chart-line me-2"></i>Relatórios Gerenciais
+        </h2>
+    </div>
+</div>
+
+<!-- Cards de Relatórios -->
+<div class="row mt-4{% if session.user_type == 'tecnico' %} justify-content-center{% endif %}">
+    <div class="{% if session.user_type == 'tecnico' %}col-md-8 col-lg-6{% else %}col-md-6{% endif %}">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-building fa-3x text-primary mb-3"></i>
+                <h4 class="card-title">Relatório de Empresas</h4>
+                <p class="card-text">
+                    Visualize estatísticas detalhadas por empresa: quantos chamados foram abertos, 
+                    quem abriu, quem assumiu e status atual.
+                </p>
+                <ul class="list-unstyled text-start">
+                    <li><i class="fas fa-check text-success me-2"></i>Total de chamados por empresa</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Usuários que abriram chamados</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Técnicos que atenderam</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Status dos chamados</li>
+                </ul>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('helpdesk.relatorio_empresas') }}" class="btn btn-primary">
+                        <i class="fas fa-eye me-2"></i>Ver Relatório
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if session.user_type == 'administrador' %}
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-user-cog fa-3x text-success mb-3"></i>
+                <h4 class="card-title">Relatório de Técnicos</h4>
+                <p class="card-text">
+                    Acompanhe o desempenho dos técnicos: quantos chamados cada um atendeu,
+                    quais empresas foram atendidas e produtividade.
+                </p>
+                <ul class="list-unstyled text-start">
+                    <li><i class="fas fa-check text-success me-2"></i>Chamados atendidos por técnico</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Empresas atendidas</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Status dos atendimentos</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Chamados recentes</li>
+                </ul>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('helpdesk.relatorio_tecnicos') }}" class="btn btn-success">
+                        <i class="fas fa-eye me-2"></i>Ver Relatório
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Ações Rápidas -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Ações Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <a href="{{ url_for('helpdesk.dashboard_admin') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <a href="{{ url_for('helpdesk.listar_chamados') }}" class="btn btn-outline-info">
+                                <i class="fas fa-ticket-alt me-2"></i>Todos os Chamados
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <a href="{{ url_for('helpdesk.listar_empresas') }}" class="btn btn-outline-warning">
+                                <i class="fas fa-building me-2"></i>Empresas
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

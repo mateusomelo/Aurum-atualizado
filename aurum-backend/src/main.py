@@ -40,6 +40,33 @@ app.register_blueprint(service_types_bp, url_prefix='/api')
 app.register_blueprint(contact_bp, url_prefix='/api')
 app.register_blueprint(helpdesk_bp)
 
+# APIs para os filtros dos relatórios
+@app.route('/helpdesk/dados/empresas')
+def api_dados_empresas():
+    from flask import jsonify
+    try:
+        empresas = Empresa.query.filter_by(ativa=True).all()
+        resultado = [{
+            'id': empresa.id,
+            'nome_empresa': empresa.nome_empresa
+        } for empresa in empresas]
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/helpdesk/dados/tecnicos')
+def api_dados_tecnicos():
+    from flask import jsonify
+    try:
+        tecnicos = Usuario.query.filter_by(tipo_usuario='tecnico', ativo=True).all()
+        resultado = [{
+            'id': tecnico.id,
+            'nome': tecnico.nome
+        } for tecnico in tecnicos]
+        return jsonify(resultado)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # Database configurations
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

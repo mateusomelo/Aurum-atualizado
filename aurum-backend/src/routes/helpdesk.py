@@ -4,6 +4,8 @@ from src.models.user import db
 from src.utils import login_required, admin_required, admin_or_tecnico_required
 from datetime import datetime
 from src.utils.timezone_utils import get_brazil_time
+from src.utils.export_utils import ReportExporter
+from flask import send_file
 import logging
 
 helpdesk_bp = Blueprint('helpdesk', __name__)
@@ -389,9 +391,14 @@ def assumir_chamado(chamado_id):
 
 @helpdesk_bp.route('/chamado/<int:chamado_id>/editar', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@admin_or_tecnico_required
 def editar_chamado(chamado_id):
     chamado = Chamado.query.get_or_404(chamado_id)
+    
+    # Técnicos só podem editar chamados abertos
+    if session['user_type'] == 'tecnico' and chamado.status != 'aberto':
+        flash('Técnicos só podem editar chamados com status "aberto".', 'error')
+        return redirect(url_for('helpdesk.ver_chamado', chamado_id=chamado_id))
     
     if request.method == 'POST':
         chamado.titulo = request.form['titulo']
@@ -572,6 +579,267 @@ def desativar_servico(servico_id):
     flash('Serviço desativado com sucesso!', 'success')
     return redirect(url_for('helpdesk.listar_servicos'))
 
+@helpdesk_bp.route('/relatorios')
+@login_required
+@admin_or_tecnico_required
+def relatorios():
+    return render_template('relatorios.html')
+
+@helpdesk_bp.route('/relatorio/empresas')
+@login_required
+@admin_or_tecnico_required
+def relatorio_empresas():
+    # Obter filtro da query string
+    empresa_id = request.args.get('empresa_id', '')
+    
+    # Buscar empresas baseado no filtro
+    if empresa_id:
+        empresas = Empresa.query.filter_by(id=int(empresa_id), ativa=True).all()
+    else:
+        empresas = Empresa.query.filter_by(ativa=True).all()
+    
+    relatorio_empresas = []
+    for empresa in empresas:
+        # Buscar usuários da empresa
+        usuarios_empresa = Usuario.query.filter_by(empresa_id=empresa.id, ativo=True).all()
+        
+        # Buscar chamados da empresa
+        usuario_ids = [u.id for u in usuarios_empresa]
+        chamados = Chamado.query.filter(Chamado.usuario_id.in_(usuario_ids)).all() if usuario_ids else []
+        
+        # Estatísticas por usuário
+        usuarios_stats = []
+        for usuario in usuarios_empresa:
+            chamados_usuario = Chamado.query.filter_by(usuario_id=usuario.id).all()
+            usuarios_stats.append({
+                'usuario': usuario,
+                'total_chamados': len(chamados_usuario),
+                'abertos': len([c for c in chamados_usuario if c.status == 'aberto']),
+                'em_andamento': len([c for c in chamados_usuario if c.status == 'em_andamento']),
+                'finalizados': len([c for c in chamados_usuario if c.status == 'finalizado'])
+            })
+        
+        # Técnicos que atenderam chamados desta empresa
+        tecnicos_atenderam = []
+        for chamado in chamados:
+            if chamado.tecnico_id:
+                tecnico = Usuario.query.get(chamado.tecnico_id)
+                if tecnico and tecnico not in [t['tecnico'] for t in tecnicos_atenderam]:
+                    chamados_tecnico_empresa = [c for c in chamados if c.tecnico_id == tecnico.id]
+                    tecnicos_atenderam.append({
+                        'tecnico': tecnico,
+                        'chamados_atendidos': len(chamados_tecnico_empresa),
+                        'finalizados': len([c for c in chamados_tecnico_empresa if c.status == 'finalizado'])
+                    })
+        
+        relatorio_empresas.append({
+            'empresa': empresa,
+            'total_usuarios': len(usuarios_empresa),
+            'total_chamados': len(chamados),
+            'chamados_abertos': len([c for c in chamados if c.status == 'aberto']),
+            'chamados_andamento': len([c for c in chamados if c.status == 'em_andamento']),
+            'chamados_finalizados': len([c for c in chamados if c.status == 'finalizado']),
+            'usuarios_stats': usuarios_stats,
+            'tecnicos_atenderam': tecnicos_atenderam
+        })
+    
+    return render_template('relatorio_empresas.html', relatorio=relatorio_empresas)
+
+@helpdesk_bp.route('/relatorio/tecnicos')
+@login_required
+@admin_required
+def relatorio_tecnicos():
+    # Obter filtro da query string
+    tecnico_id = request.args.get('tecnico_id', '')
+    
+    # Buscar técnicos baseado no filtro
+    if tecnico_id:
+        tecnicos = Usuario.query.filter_by(id=int(tecnico_id), tipo_usuario='tecnico', ativo=True).all()
+    else:
+        tecnicos = Usuario.query.filter_by(tipo_usuario='tecnico', ativo=True).all()
+    
+    relatorio_tecnicos = []
+    for tecnico in tecnicos:
+        # Chamados atribuídos ao técnico
+        chamados_tecnico = Chamado.query.filter_by(tecnico_id=tecnico.id).all()
+        
+        # Estatísticas por empresa
+        empresas_atendidas = {}
+        for chamado in chamados_tecnico:
+            if chamado.usuario and chamado.usuario.empresa:
+                empresa_nome = chamado.usuario.empresa.nome_empresa
+                if empresa_nome not in empresas_atendidas:
+                    empresas_atendidas[empresa_nome] = {
+                        'total': 0,
+                        'abertos': 0,
+                        'em_andamento': 0,
+                        'finalizados': 0
+                    }
+                empresas_atendidas[empresa_nome]['total'] += 1
+                if chamado.status == 'em_andamento':
+                    empresas_atendidas[empresa_nome]['em_andamento'] += 1
+                elif chamado.status == 'aberto':
+                    empresas_atendidas[empresa_nome]['abertos'] += 1
+                elif chamado.status == 'finalizado':
+                    empresas_atendidas[empresa_nome]['finalizados'] += 1
+        
+        relatorio_tecnicos.append({
+            'tecnico': tecnico,
+            'total_chamados': len(chamados_tecnico),
+            'chamados_abertos': len([c for c in chamados_tecnico if c.status == 'aberto']),
+            'chamados_andamento': len([c for c in chamados_tecnico if c.status == 'em_andamento']),
+            'chamados_finalizados': len([c for c in chamados_tecnico if c.status == 'finalizado']),
+            'empresas_atendidas': empresas_atendidas,
+            'chamados_recentes': sorted(chamados_tecnico, key=lambda x: x.data_criacao, reverse=True)[:5]
+        })
+    
+    return render_template('relatorio_tecnicos.html', relatorio=relatorio_tecnicos)
+
+@helpdesk_bp.route('/relatorio/empresas/export/<formato>')
+@login_required
+@admin_or_tecnico_required
+def export_relatorio_empresas(formato):
+    # Obter filtro da query string
+    empresa_id = request.args.get('empresa_id', '')
+    
+    # Buscar empresas baseado no filtro
+    if empresa_id:
+        empresas = Empresa.query.filter_by(id=int(empresa_id), ativa=True).all()
+    else:
+        empresas = Empresa.query.filter_by(ativa=True).all()
+    
+    relatorio_empresas = []
+    for empresa in empresas:
+        usuarios_empresa = Usuario.query.filter_by(empresa_id=empresa.id, ativo=True).all()
+        usuario_ids = [u.id for u in usuarios_empresa]
+        chamados = Chamado.query.filter(Chamado.usuario_id.in_(usuario_ids)).all() if usuario_ids else []
+        
+        usuarios_stats = []
+        for usuario in usuarios_empresa:
+            chamados_usuario = Chamado.query.filter_by(usuario_id=usuario.id).all()
+            usuarios_stats.append({
+                'usuario': usuario,
+                'total_chamados': len(chamados_usuario),
+                'abertos': len([c for c in chamados_usuario if c.status == 'aberto']),
+                'em_andamento': len([c for c in chamados_usuario if c.status == 'em_andamento']),
+                'finalizados': len([c for c in chamados_usuario if c.status == 'finalizado'])
+            })
+        
+        tecnicos_atenderam = []
+        for chamado in chamados:
+            if chamado.tecnico_id:
+                tecnico = Usuario.query.get(chamado.tecnico_id)
+                if tecnico and tecnico not in [t['tecnico'] for t in tecnicos_atenderam]:
+                    chamados_tecnico_empresa = [c for c in chamados if c.tecnico_id == tecnico.id]
+                    tecnicos_atenderam.append({
+                        'tecnico': tecnico,
+                        'chamados_atendidos': len(chamados_tecnico_empresa),
+                        'finalizados': len([c for c in chamados_tecnico_empresa if c.status == 'finalizado'])
+                    })
+        
+        relatorio_empresas.append({
+            'empresa': empresa,
+            'total_usuarios': len(usuarios_empresa),
+            'total_chamados': len(chamados),
+            'chamados_abertos': len([c for c in chamados if c.status == 'aberto']),
+            'chamados_andamento': len([c for c in chamados if c.status == 'em_andamento']),
+            'chamados_finalizados': len([c for c in chamados if c.status == 'finalizado']),
+            'usuarios_stats': usuarios_stats,
+            'tecnicos_atenderam': tecnicos_atenderam
+        })
+    
+    # Exportar
+    exporter = ReportExporter()
+    
+    if formato.lower() == 'pdf':
+        buffer = exporter.export_empresas_pdf(relatorio_empresas)
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f'relatorio_empresas_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf',
+            mimetype='application/pdf'
+        )
+    elif formato.lower() == 'excel':
+        buffer = exporter.export_empresas_excel(relatorio_empresas)
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f'relatorio_empresas_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx',
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+    else:
+        flash('Formato de exportação inválido!', 'error')
+        return redirect(url_for('helpdesk.relatorio_empresas'))
+
+@helpdesk_bp.route('/relatorio/tecnicos/export/<formato>')
+@login_required
+@admin_required
+def export_relatorio_tecnicos(formato):
+    # Obter filtro da query string
+    tecnico_id = request.args.get('tecnico_id', '')
+    
+    # Buscar técnicos baseado no filtro
+    if tecnico_id:
+        tecnicos = Usuario.query.filter_by(id=int(tecnico_id), tipo_usuario='tecnico', ativo=True).all()
+    else:
+        tecnicos = Usuario.query.filter_by(tipo_usuario='tecnico', ativo=True).all()
+    
+    relatorio_tecnicos = []
+    for tecnico in tecnicos:
+        chamados_tecnico = Chamado.query.filter_by(tecnico_id=tecnico.id).all()
+        
+        empresas_atendidas = {}
+        for chamado in chamados_tecnico:
+            if chamado.usuario and chamado.usuario.empresa:
+                empresa_nome = chamado.usuario.empresa.nome_empresa
+                if empresa_nome not in empresas_atendidas:
+                    empresas_atendidas[empresa_nome] = {
+                        'total': 0,
+                        'abertos': 0,
+                        'em_andamento': 0,
+                        'finalizados': 0
+                    }
+                empresas_atendidas[empresa_nome]['total'] += 1
+                if chamado.status == 'em_andamento':
+                    empresas_atendidas[empresa_nome]['em_andamento'] += 1
+                elif chamado.status == 'aberto':
+                    empresas_atendidas[empresa_nome]['abertos'] += 1
+                elif chamado.status == 'finalizado':
+                    empresas_atendidas[empresa_nome]['finalizados'] += 1
+        
+        relatorio_tecnicos.append({
+            'tecnico': tecnico,
+            'total_chamados': len(chamados_tecnico),
+            'chamados_abertos': len([c for c in chamados_tecnico if c.status == 'aberto']),
+            'chamados_andamento': len([c for c in chamados_tecnico if c.status == 'em_andamento']),
+            'chamados_finalizados': len([c for c in chamados_tecnico if c.status == 'finalizado']),
+            'empresas_atendidas': empresas_atendidas,
+            'chamados_recentes': sorted(chamados_tecnico, key=lambda x: x.data_criacao, reverse=True)[:5]
+        })
+    
+    # Exportar
+    exporter = ReportExporter()
+    
+    if formato.lower() == 'pdf':
+        buffer = exporter.export_tecnicos_pdf(relatorio_tecnicos)
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f'relatorio_tecnicos_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf',
+            mimetype='application/pdf'
+        )
+    elif formato.lower() == 'excel':
+        buffer = exporter.export_tecnicos_excel(relatorio_tecnicos)
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f'relatorio_tecnicos_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx',
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+    else:
+        flash('Formato de exportação inválido!', 'error')
+        return redirect(url_for('helpdesk.relatorio_tecnicos'))
+
 @helpdesk_bp.route('/chamado/<int:chamado_id>/excluir', methods=['POST'])
 @login_required
 @admin_or_tecnico_required
@@ -603,3 +871,5 @@ def excluir_chamado(chamado_id):
         return redirect(url_for('helpdesk.dashboard_admin'))
     else:
         return redirect(url_for('helpdesk.dashboard_tecnico'))
+
+# APIs movidas para main.py para evitar problemas de roteamento

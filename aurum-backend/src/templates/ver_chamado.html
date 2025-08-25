@@ -100,10 +100,13 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    {% if session.user_type == 'administrador' %}
+                    {% if session.user_type == 'administrador' or (session.user_type == 'tecnico' and chamado.status == 'aberto') %}
                         <a href="{{ url_for('helpdesk.editar_chamado', chamado_id=chamado.id) }}" class="btn btn-warning">
                             <i class="fas fa-edit me-2"></i>Editar Chamado
                         </a>
+                    {% endif %}
+                    
+                    {% if session.user_type == 'administrador' %}
                         
                         {% if chamado.status != 'finalizado' %}
                         <a href="{{ url_for('helpdesk.finalizar_chamado', chamado_id=chamado.id) }}" class="btn btn-success">

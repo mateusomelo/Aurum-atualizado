@@ -24,6 +24,6 @@ def admin_or_tecnico_required(f):
     def decorated_function(*args, **kwargs):
         if 'user_type' not in session or session['user_type'] not in ['administrador', 'tecnico']:
             flash('Acesso negado! Apenas administradores e técnicos podem acessar esta página.', 'error')
-            return redirect(url_for('index'))
+            return redirect(url_for('helpdesk.login'))
         return f(*args, **kwargs)
     return decorated_function
