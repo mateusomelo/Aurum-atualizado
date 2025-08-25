@@ -52,17 +52,17 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="tecnico_id" class="form-label">Técnico Responsável</label>
+                                <label for="tecnico_id" class="form-label">Responsável</label>
                                 <select class="form-select" id="tecnico_id" name="tecnico_id">
-                                    <option value="">Selecione um técnico...</option>
+                                    <option value="">Selecione um responsável...</option>
                                     {% for tecnico in tecnicos %}
                                     <option value="{{ tecnico.id }}" {{ 'selected' if chamado.tecnico_id == tecnico.id else '' }}>
-                                        {{ tecnico.nome }}
+                                        {{ tecnico.nome }} ({{ tecnico.tipo_usuario.title() }})
                                     </option>
                                     {% endfor %}
                                 </select>
                                 <small class="form-text text-muted">
-                                    Apenas administradores e técnicos podem atribuir responsáveis.
+                                    Técnicos e administradores podem ser responsáveis pelos chamados.
                                 </small>
                             </div>
                         </div>

@@ -119,3 +119,199 @@ body {
     position: relative;
     height: 300px;
 }
+
+/* Sidebar styles */
+.admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 250px;
+    background-color: var(--bs-dark);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1000;
+    padding-top: 20px;
+    transition: transform 0.3s ease-in-out;
+    overflow-y: auto;
+}
+
+.admin-sidebar-header {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 1rem;
+}
+
+.admin-sidebar-header h4 {
+    color: var(--bs-light);
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.admin-sidebar-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.admin-sidebar-nav .nav-item {
+    margin-bottom: 5px;
+}
+
+.admin-sidebar-nav .nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-radius: 0;
+}
+
+.admin-sidebar-nav .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--bs-light);
+    transform: translateX(5px);
+}
+
+.admin-sidebar-nav .nav-link.active {
+    background-color: var(--bs-primary);
+    color: var(--bs-light);
+}
+
+.admin-sidebar-nav .nav-link i {
+    width: 20px;
+    text-align: center;
+    margin-right: 10px;
+}
+
+/* Dropdown toggles in sidebar */
+.admin-sidebar-nav .dropdown-toggle {
+    position: relative;
+}
+
+.admin-sidebar-nav .dropdown-toggle::after {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.3s ease;
+}
+
+.admin-sidebar-nav .dropdown-toggle[aria-expanded="true"]::after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.admin-sidebar-nav .dropdown-toggle:hover {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 80%, rgba(255, 255, 255, 0.1) 100%);
+}
+
+/* Submenu styles */
+.admin-sidebar-submenu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.admin-sidebar-submenu li {
+    margin: 0;
+}
+
+.admin-sidebar-submenu .nav-link {
+    padding: 0.5rem 1rem 0.5rem 3rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.admin-sidebar-submenu .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--bs-light);
+    transform: translateX(5px);
+}
+
+.admin-sidebar-submenu .nav-link.active {
+    background-color: var(--bs-primary);
+    color: var(--bs-light);
+}
+
+.admin-sidebar-submenu .nav-link i {
+    width: 16px;
+    margin-right: 8px;
+}
+
+/* Main content with sidebar */
+.admin-main-content {
+    margin-left: 250px;
+    min-height: 100vh;
+    transition: margin-left 0.3s ease-in-out;
+}
+
+/* Top navbar when sidebar is present */
+.admin-navbar {
+    margin-left: 250px;
+    transition: margin-left 0.3s ease-in-out;
+}
+
+/* Flash messages with sidebar */
+.admin-flash-messages {
+    margin-left: 250px;
+    transition: margin-left 0.3s ease-in-out;
+}
+
+/* Sidebar toggle button */
+.admin-sidebar-toggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    background-color: var(--bs-primary);
+    border: none;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    display: none;
+}
+
+/* Responsive sidebar */
+@media (max-width: 768px) {
+    .admin-sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .admin-sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .admin-main-content {
+        margin-left: 0;
+    }
+    
+    .admin-navbar {
+        margin-left: 0;
+    }
+    
+    .admin-flash-messages {
+        margin-left: 0;
+    }
+    
+    .admin-sidebar-toggle {
+        display: block;
+    }
+}
+
+/* Overlay for mobile sidebar */
+.admin-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+}
+
+.admin-sidebar-overlay.show {
+    display: block;
+}

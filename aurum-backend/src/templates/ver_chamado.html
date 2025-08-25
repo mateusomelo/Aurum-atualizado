@@ -106,33 +106,22 @@
                         </a>
                     {% endif %}
                     
-                    {% if session.user_type == 'administrador' %}
-                        
-                        {% if chamado.status != 'finalizado' %}
-                        <a href="{{ url_for('helpdesk.finalizar_chamado', chamado_id=chamado.id) }}" class="btn btn-success">
-                            <i class="fas fa-check me-2"></i>Finalizar Chamado
-                        </a>
-                        {% endif %}
-                        
-                        {% if chamado.status != 'finalizado' %}
-                        <a href="{{ url_for('helpdesk.responder_chamado', chamado_id=chamado.id) }}" class="btn btn-primary">
-                            <i class="fas fa-reply me-2"></i>Responder
-                        </a>
-                        {% endif %}
-                    {% elif session.user_type == 'tecnico' and chamado.status != 'finalizado' %}
+                    {% if session.user_type in ['administrador', 'tecnico'] and chamado.status != 'finalizado' %}
                         {% if chamado.tecnico_id is none and chamado.status == 'aberto' %}
                         <a href="{{ url_for('helpdesk.assumir_chamado', chamado_id=chamado.id) }}" class="btn btn-success">
                             <i class="fas fa-hand-paper me-2"></i>Assumir Chamado
                         </a>
                         {% endif %}
                         
-                        <a href="{{ url_for('helpdesk.finalizar_chamado', chamado_id=chamado.id) }}" class="btn btn-success">
-                            <i class="fas fa-check me-2"></i>Finalizar Chamado
-                        </a>
-                        
                         <a href="{{ url_for('helpdesk.responder_chamado', chamado_id=chamado.id) }}" class="btn btn-primary">
                             <i class="fas fa-reply me-2"></i>Responder
                         </a>
+                        
+                        {% if session.user_type == 'administrador' or session.user_type == 'tecnico' %}
+                        <a href="{{ url_for('helpdesk.finalizar_chamado', chamado_id=chamado.id) }}" class="btn btn-success">
+                            <i class="fas fa-check me-2"></i>Finalizar Chamado
+                        </a>
+                        {% endif %}
                     {% elif session.user_type == 'cliente' and chamado.usuario_id == session.user_id and chamado.status != 'finalizado' %}
                         <a href="{{ url_for('helpdesk.responder_chamado', chamado_id=chamado.id) }}" class="btn btn-primary">
                             <i class="fas fa-reply me-2"></i>Adicionar Mensagem

@@ -40,7 +40,7 @@ app.register_blueprint(clients_bp, url_prefix='/api')
 app.register_blueprint(service_types_bp, url_prefix='/api')
 app.register_blueprint(contact_bp, url_prefix='/api')
 app.register_blueprint(helpdesk_bp)
-app.register_blueprint(cache_bp)
+# app.register_blueprint(cache_bp)  # Interface visual removida - apenas automação ativa
 
 # APIs para os filtros dos relatórios
 @app.route('/helpdesk/dados/empresas')

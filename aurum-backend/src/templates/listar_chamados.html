@@ -127,14 +127,7 @@
                                             </a>
                                         {% endif %}
                                         
-                                        {% if session.user_type == 'administrador' %}
-                                            {% if chamado.status != 'finalizado' %}
-                                            <a href="{{ url_for('helpdesk.finalizar_chamado', chamado_id=chamado.id) }}" 
-                                               class="btn btn-outline-success btn-sm" title="Finalizar">
-                                                <i class="fas fa-check"></i>
-                                            </a>
-                                            {% endif %}
-                                        {% elif session.user_type == 'tecnico' %}
+                                        {% if session.user_type in ['administrador', 'tecnico'] %}
                                             {% if chamado.tecnico_id is none and chamado.status == 'aberto' %}
                                             <a href="{{ url_for('helpdesk.assumir_chamado', chamado_id=chamado.id) }}" class="btn btn-outline-success btn-sm" title="Assumir">
                                                 <i class="fas fa-hand-paper"></i>
@@ -142,6 +135,13 @@
                                             {% elif chamado.status != 'finalizado' %}
                                             <a href="{{ url_for('helpdesk.responder_chamado', chamado_id=chamado.id) }}" class="btn btn-outline-info btn-sm" title="Responder">
                                                 <i class="fas fa-reply"></i>
+                                            </a>
+                                            {% endif %}
+                                            
+                                            {% if session.user_type == 'administrador' and chamado.status != 'finalizado' %}
+                                            <a href="{{ url_for('helpdesk.finalizar_chamado', chamado_id=chamado.id) }}" 
+                                               class="btn btn-outline-success btn-sm" title="Finalizar">
+                                                <i class="fas fa-check"></i>
                                             </a>
                                             {% endif %}
                                         {% endif %}

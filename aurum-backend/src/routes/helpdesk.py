@@ -426,7 +426,7 @@ def editar_chamado(chamado_id):
     # Buscar dados para o formulário
     empresas = Empresa.query.filter_by(ativa=True).all()
     servicos = Servico.query.filter_by(ativo=True).all()
-    tecnicos = Usuario.query.filter_by(ativo=True, tipo_usuario='tecnico').all()
+    tecnicos = Usuario.query.filter(Usuario.ativo == True, Usuario.tipo_usuario.in_(['tecnico', 'administrador'])).all()
     
     return render_template('editar_chamado.html', 
                          chamado=chamado, 
@@ -480,6 +480,11 @@ def ver_usuario(usuario_id):
 def editar_usuario(usuario_id):
     usuario = Usuario.query.get_or_404(usuario_id)
     
+    # Técnicos só podem editar clientes
+    if session['user_type'] == 'tecnico' and usuario.tipo_usuario != 'cliente':
+        flash('Técnicos só podem editar usuários do tipo cliente!', 'error')
+        return redirect(url_for('helpdesk.listar_usuarios'))
+    
     if request.method == 'POST':
         usuario.nome = request.form['nome']
         usuario.email = request.form['email']
@@ -501,9 +506,15 @@ def editar_usuario(usuario_id):
 
 @helpdesk_bp.route('/usuario/<int:usuario_id>/desativar', methods=['POST'])
 @login_required
-@admin_required
+@admin_or_tecnico_required
 def desativar_usuario(usuario_id):
     usuario = Usuario.query.get_or_404(usuario_id)
+    
+    # Técnicos só podem desativar clientes
+    if session['user_type'] == 'tecnico' and usuario.tipo_usuario != 'cliente':
+        flash('Técnicos só podem desativar usuários do tipo cliente!', 'error')
+        return redirect(url_for('helpdesk.listar_usuarios'))
+    
     usuario.ativo = False
     db.session.commit()
     flash('Usuário desativado com sucesso!', 'success')

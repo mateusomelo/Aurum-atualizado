@@ -70,17 +70,18 @@ function updateHeroCarousel() {
         }
     }
 
-    // Atualizar título da página baseado no slide atual
-    updatePageTitle();
+    // Título da página fixo - não muda com o carrossel
+    // updatePageTitle();
 }
 
-function updatePageTitle() {
-    const activeSlide = heroSlides[currentHeroSlideIndex];
-    if (activeSlide) {
-        const title = activeSlide.querySelector(".hero-title").textContent;
-        document.title = `${title} | Aurum - Soluções Integradas em T.I.`;
-    }
-}
+// Função desabilitada para manter título fixo
+// function updatePageTitle() {
+//     const activeSlide = heroSlides[currentHeroSlideIndex];
+//     if (activeSlide) {
+//         const title = activeSlide.querySelector(".hero-title").textContent;
+//         document.title = `${title} | Aurum - Soluções Integradas em T.I.`;
+//     }
+// }
 
 function startHeroAutoPlay() {
     stopHeroAutoPlay(); // Limpar qualquer interval existente
