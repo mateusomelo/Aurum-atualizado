@@ -101,19 +101,19 @@
                     </div>
                     
                     <!-- Informações do Criador -->
-                    <div class="card bg-light mt-3">
+                    <div class="card mt-3" style="background-color: #4a5568;">
                         <div class="card-body">
-                            <h6>Informações do Criador</h6>
+                            <h6 class="text-white">Informações do Criador</h6>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <small>
+                                    <small class="text-white">
                                         <strong>Nome:</strong> {{ chamado.usuario.nome }}<br>
                                         <strong>Email:</strong> {{ chamado.usuario.email }}<br>
                                         <strong>Telefone:</strong> {{ chamado.usuario.telefone }}
                                     </small>
                                 </div>
                                 <div class="col-md-6">
-                                    <small>
+                                    <small class="text-white">
                                         <strong>Data de Criação:</strong> {{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}<br>
                                         {% if chamado.data_finalizacao %}
                                         <strong>Data de Finalização:</strong> {{ chamado.data_finalizacao.strftime('%d/%m/%Y %H:%M') }}

@@ -58,7 +58,7 @@
                 <h5>Status dos Chamados</h5>
             </div>
             <div class="card-body">
-                <canvas id="statusChart" width="400" height="200"></canvas>
+                <canvas id="statusChart" width="430" height="430"></canvas>
             </div>
         </div>
     </div>
@@ -173,7 +173,8 @@ const statusChart = new Chart(ctx, {
         }]
     },
     options: {
-        responsive: true,
+        responsive: false,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'bottom'
