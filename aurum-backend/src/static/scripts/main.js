@@ -138,13 +138,46 @@ document.addEventListener("DOMContentLoaded", function() {
     
     // EmailJS Configuration - CONFIGURE ESTES VALORES APÓS CRIAR SUA CONTA
     const EMAILJS_CONFIG = {
-        serviceID: 'service_tonz2t8',      // Ex: 'service_abc123'
-        templateID: 'template_nfbgifo',    // Ex: 'template_def456'
-        publicKey: 'czv_mghrVuYGt97EH'       // Ex: 'ghi789jkl012'
+        serviceID: 'service_c8bpefa',      // Ex: 'service_abc123'
+        templateID: 'template_wuj7fvp',    // Ex: 'template_def456'
+        publicKey: 'NNRSL0CXI6Gg7aj6P'       // Ex: 'ghi789jkl012'
     };
 
-    // Initialize EmailJS
-    emailjs.init(EMAILJS_CONFIG.publicKey);
+    // Function to initialize EmailJS when it's available
+    function initEmailJS() {
+        return new Promise((resolve, reject) => {
+            if (typeof emailjs !== 'undefined') {
+                try {
+                    emailjs.init(EMAILJS_CONFIG.publicKey);
+                    console.log('EmailJS inicializado com sucesso');
+                    resolve();
+                } catch (error) {
+                    console.error('Erro ao inicializar EmailJS:', error);
+                    reject(error);
+                }
+            } else {
+                // Wait for EmailJS to load
+                let attempts = 0;
+                const checkEmailJS = setInterval(() => {
+                    attempts++;
+                    if (typeof emailjs !== 'undefined') {
+                        clearInterval(checkEmailJS);
+                        try {
+                            emailjs.init(EMAILJS_CONFIG.publicKey);
+                            console.log('EmailJS inicializado com sucesso após espera');
+                            resolve();
+                        } catch (error) {
+                            console.error('Erro ao inicializar EmailJS:', error);
+                            reject(error);
+                        }
+                    } else if (attempts > 50) { // 5 seconds timeout
+                        clearInterval(checkEmailJS);
+                        reject(new Error('EmailJS não foi carregado'));
+                    }
+                }, 100);
+            }
+        });
+    }
 
     // Contact form handling com EmailJS
     const contactForm = document.getElementById("contactForm");
@@ -158,25 +191,73 @@ document.addEventListener("DOMContentLoaded", function() {
             submitBtn.textContent = "Enviando...";
             submitBtn.disabled = true;
             
+            // Verify EmailJS is loaded before proceeding
+            if (typeof emailjs === 'undefined') {
+                console.error('EmailJS não está carregado');
+                showMessage("❌ Erro: Sistema de envio não está disponível. Tente recarregar a página.", "error");
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                return;
+            }
+            
+            // Validate form data
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const subject = document.getElementById('subject').value.trim();
+            const message = document.getElementById('message').value.trim();
+            
+            if (!name || !email || !subject || !message) {
+                showMessage("❌ Por favor, preencha todos os campos.", "error");
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                showMessage("❌ Por favor, insira um email válido.", "error");
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                return;
+            }
+            
             // Get form data
             const now = new Date();
             const formData = {
-                from_name: document.getElementById('name').value,
-                from_email: document.getElementById('email').value,
-                subject: document.getElementById('subject').value,
-                message: document.getElementById('message').value,
+                from_name: name,
+                from_email: email,
+                subject: subject,
+                message: message,
                 to_email: 'contato@aurum.inf.br',
                 current_date: now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR')
             };
             
+            console.log('Enviando email com dados:', formData);
+            
             // Send email via EmailJS
             emailjs.send(EMAILJS_CONFIG.serviceID, EMAILJS_CONFIG.templateID, formData)
                 .then(function(response) {
+                    console.log('Email enviado com sucesso:', response);
                     showMessage("✅ Mensagem enviada com sucesso! Entraremos em contato em breve.", "success");
                     contactForm.reset();
                 }, function(error) {
-                    console.error('EmailJS Error:', error);
-                    showMessage("❌ Erro ao enviar mensagem. Tente novamente.", "error");
+                    console.error('EmailJS Error Details:', error);
+                    let errorMessage = "❌ Erro ao enviar mensagem. ";
+                    
+                    if (error.status === 400) {
+                        errorMessage += "Dados inválidos. Verifique as informações.";
+                    } else if (error.status === 401) {
+                        errorMessage += "Erro de autorização. Contate o administrador.";
+                    } else if (error.status === 403) {
+                        errorMessage += "Acesso negado. Verifique a configuração.";
+                    } else if (error.status === 404) {
+                        errorMessage += "Serviço não encontrado. Contate o administrador.";
+                    } else if (error.status >= 500) {
+                        errorMessage += "Erro no servidor. Tente novamente em alguns minutos.";
+                    } else {
+                        errorMessage += "Tente novamente ou contate-nos diretamente.";
+                    }
+                    
+                    showMessage(errorMessage, "error");
                 })
                 .finally(() => {
                     submitBtn.textContent = originalText;
@@ -184,6 +265,12 @@ document.addEventListener("DOMContentLoaded", function() {
                 });
         });
     }
+
+    // Initialize EmailJS when available
+    initEmailJS().catch(error => {
+        console.error('Falha ao inicializar EmailJS:', error);
+        showMessage("⚠️ Sistema de email pode não estar funcionando corretamente.", "warning");
+    });
     
     // Intersection Observer for animations
     const observerOptions = {
