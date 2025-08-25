@@ -142,6 +142,15 @@
                                             </a>
                                             {% endif %}
                                         {% endif %}
+                                        
+                                        {% if session.user_type == 'administrador' or (session.user_type == 'tecnico' and (chamado.tecnico_id is none or chamado.tecnico_id == session.user_id)) %}
+                                        <form method="POST" action="{{ url_for('helpdesk.excluir_chamado', chamado_id=chamado.id) }}" 
+                                              onsubmit="return confirm('Excluir chamado #{{ chamado.id }}?')" style="display: inline;">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>

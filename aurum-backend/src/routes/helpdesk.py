@@ -3,6 +3,7 @@ from src.models.helpdesk_models import Usuario, Empresa, Servico, Chamado, Respo
 from src.models.user import db
 from src.utils import login_required, admin_required, admin_or_tecnico_required
 from datetime import datetime
+from src.utils.timezone_utils import get_brazil_time
 import logging
 
 helpdesk_bp = Blueprint('helpdesk', __name__)
@@ -63,25 +64,29 @@ def dashboard_admin():
 @login_required
 @admin_or_tecnico_required
 def dashboard_tecnico():
-    user_id = session['user_id']
+    # Técnicos podem ver todos os chamados
+    chamados = Chamado.query.order_by(Chamado.data_criacao.desc()).all()
     
-    # Chamados atribuídos ao técnico ou não atribuídos
-    meus_chamados = Chamado.query.filter_by(tecnico_id=user_id).all() or []
-    chamados_disponiveís = Chamado.query.filter_by(tecnico_id=None, status='aberto').all() or []
-    
-    todos_chamados = list(meus_chamados) + list(chamados_disponiveís)
-    
-    return render_template('dashboard_tecnico.html', chamados=todos_chamados)
+    return render_template('dashboard_tecnico.html', chamados=chamados)
 
 @helpdesk_bp.route('/dashboard/cliente')
 @login_required
 def dashboard_cliente():
     user_id = session['user_id']
     
-    # Apenas chamados do próprio cliente
-    meus_chamados = Chamado.query.filter_by(usuario_id=user_id).order_by(Chamado.data_criacao.desc()).all()
+    # Buscar o usuário atual para pegar a empresa vinculada
+    usuario_atual = Usuario.query.get(user_id)
     
-    return render_template('dashboard_cliente.html', chamados=meus_chamados)
+    if usuario_atual and usuario_atual.empresa_id:
+        # Clientes veem chamados de usuários da mesma empresa
+        usuarios_da_empresa = Usuario.query.filter_by(empresa_id=usuario_atual.empresa_id).all()
+        usuario_ids = [u.id for u in usuarios_da_empresa]
+        chamados = Chamado.query.filter(Chamado.usuario_id.in_(usuario_ids)).order_by(Chamado.data_criacao.desc()).all()
+    else:
+        # Se não tem empresa vinculada, vê apenas os próprios chamados
+        chamados = Chamado.query.filter_by(usuario_id=user_id).order_by(Chamado.data_criacao.desc()).all()
+    
+    return render_template('dashboard_cliente.html', chamados=chamados)
 
 # Rotas para listagem
 @helpdesk_bp.route('/usuarios')
@@ -119,14 +124,20 @@ def listar_chamados():
     if user_type == 'administrador':
         chamados = Chamado.query.order_by(Chamado.data_criacao.desc()).all()
     elif user_type == 'tecnico':
-        # Técnicos veem seus chamados e os disponíveis
-        meus_chamados = Chamado.query.filter_by(tecnico_id=user_id).all() or []
-        chamados_disponiveís = Chamado.query.filter_by(tecnico_id=None, status='aberto').all() or []
-        chamados = list(meus_chamados) + list(chamados_disponiveís)
-        chamados = sorted(chamados, key=lambda x: x.data_criacao, reverse=True)
+        # Técnicos podem ver todos os chamados
+        chamados = Chamado.query.order_by(Chamado.data_criacao.desc()).all()
     else:
-        # Clientes só veem seus próprios chamados
-        chamados = Chamado.query.filter_by(usuario_id=user_id).order_by(Chamado.data_criacao.desc()).all()
+        # Clientes veem chamados de usuários da mesma empresa
+        usuario_atual = Usuario.query.get(user_id)
+        
+        if usuario_atual and usuario_atual.empresa_id:
+            # Buscar todos os usuários da mesma empresa
+            usuarios_da_empresa = Usuario.query.filter_by(empresa_id=usuario_atual.empresa_id).all()
+            usuario_ids = [u.id for u in usuarios_da_empresa]
+            chamados = Chamado.query.filter(Chamado.usuario_id.in_(usuario_ids)).order_by(Chamado.data_criacao.desc()).all()
+        else:
+            # Se não tem empresa vinculada, vê apenas os próprios chamados
+            chamados = Chamado.query.filter_by(usuario_id=user_id).order_by(Chamado.data_criacao.desc()).all()
     
     return render_template('listar_chamados.html', chamados=chamados)
 
@@ -232,8 +243,24 @@ def criar_chamado():
         titulo = request.form['titulo']
         descricao = request.form['descricao']
         prioridade = request.form['prioridade']
-        empresa_id = request.form.get('empresa_id') or None
         servico_id = request.form.get('servico_id') or None
+        
+        # Determinar empresa_id baseado no tipo de usuário
+        user_type = session['user_type']
+        if user_type == 'cliente':
+            # Clientes automaticamente usam sua empresa vinculada
+            usuario_atual = Usuario.query.get(session['user_id'])
+            empresa_id = usuario_atual.empresa_id if usuario_atual else None
+            
+            # Validação: Clientes devem obrigatoriamente selecionar um serviço
+            if not servico_id:
+                flash('Clientes devem selecionar um serviço para criar o chamado!', 'error')
+                empresas = Empresa.query.filter_by(ativa=True).all()
+                servicos = Servico.query.filter_by(ativo=True).all()
+                return render_template('criar_chamado.html', empresas=empresas, servicos=servicos)
+        else:
+            # Admins e técnicos podem escolher a empresa
+            empresa_id = request.form.get('empresa_id') or None
         
         # Criar novo chamado
         novo_chamado = Chamado(
@@ -274,9 +301,18 @@ def ver_chamado(chamado_id):
     user_type = session['user_type']
     user_id = session['user_id']
     
-    if user_type == 'cliente' and chamado.usuario_id != user_id:
-        flash('Acesso negado!', 'error')
-        return redirect(url_for('helpdesk.dashboard_cliente'))
+    if user_type == 'cliente':
+        # Clientes podem ver chamados da mesma empresa
+        usuario_atual = Usuario.query.get(user_id)
+        usuario_do_chamado = Usuario.query.get(chamado.usuario_id)
+        
+        # Verificar se é o próprio usuário OU se pertencem à mesma empresa
+        if chamado.usuario_id != user_id:
+            if not (usuario_atual and usuario_atual.empresa_id and 
+                   usuario_do_chamado and usuario_do_chamado.empresa_id and
+                   usuario_atual.empresa_id == usuario_do_chamado.empresa_id):
+                flash('Acesso negado!', 'error')
+                return redirect(url_for('helpdesk.dashboard_cliente'))
     
     return render_template('ver_chamado.html', chamado=chamado)
 
@@ -290,10 +326,18 @@ def responder_chamado(chamado_id):
     user_id = session['user_id']
     
     # Admins e técnicos podem responder qualquer chamado
-    # Clientes só podem responder aos seus próprios chamados
-    if user_type == 'cliente' and chamado.usuario_id != user_id:
-        flash('Você só pode responder aos seus próprios chamados!', 'error')
-        return redirect(url_for('helpdesk.dashboard_cliente'))
+    # Clientes podem responder a chamados da mesma empresa
+    if user_type == 'cliente':
+        usuario_atual = Usuario.query.get(user_id)
+        usuario_do_chamado = Usuario.query.get(chamado.usuario_id)
+        
+        # Verificar se é o próprio usuário OU se pertencem à mesma empresa
+        if chamado.usuario_id != user_id:
+            if not (usuario_atual and usuario_atual.empresa_id and 
+                   usuario_do_chamado and usuario_do_chamado.empresa_id and
+                   usuario_atual.empresa_id == usuario_do_chamado.empresa_id):
+                flash('Você só pode responder a chamados da sua empresa!', 'error')
+                return redirect(url_for('helpdesk.dashboard_cliente'))
     
     if request.method == 'POST':
         resposta = request.form['resposta']
@@ -313,7 +357,7 @@ def responder_chamado(chamado_id):
                 chamado.tecnico_id = session['user_id']
             
             if novo_status == 'finalizado':
-                chamado.data_finalizacao = datetime.utcnow()
+                chamado.data_finalizacao = get_brazil_time()
         
         db.session.add(nova_resposta)
         db.session.commit()
@@ -364,7 +408,7 @@ def editar_chamado(chamado_id):
         chamado.tecnico_id = tecnico_id
         
         if request.form['status'] == 'finalizado' and chamado.data_finalizacao is None:
-            chamado.data_finalizacao = datetime.utcnow()
+            chamado.data_finalizacao = get_brazil_time()
         elif request.form['status'] != 'finalizado':
             chamado.data_finalizacao = None
         
@@ -398,7 +442,7 @@ def finalizar_chamado(chamado_id):
         
         # Finalizar o chamado
         chamado.status = 'finalizado'
-        chamado.data_finalizacao = datetime.utcnow()
+        chamado.data_finalizacao = get_brazil_time()
         
         # Adicionar mensagem de finalização se fornecida
         if mensagem_finalizacao:
@@ -527,3 +571,35 @@ def desativar_servico(servico_id):
     db.session.commit()
     flash('Serviço desativado com sucesso!', 'success')
     return redirect(url_for('helpdesk.listar_servicos'))
+
+@helpdesk_bp.route('/chamado/<int:chamado_id>/excluir', methods=['POST'])
+@login_required
+@admin_or_tecnico_required
+def excluir_chamado(chamado_id):
+    chamado = Chamado.query.get_or_404(chamado_id)
+    
+    # Verificar se o técnico tem permissão para excluir este chamado
+    user_type = session['user_type']
+    user_id = session['user_id']
+    
+    # Administradores podem excluir qualquer chamado
+    # Técnicos só podem excluir chamados que são seus ou não atribuídos
+    if user_type == 'tecnico' and chamado.tecnico_id is not None and chamado.tecnico_id != user_id:
+        flash('Você só pode excluir seus próprios chamados ou chamados não atribuídos!', 'error')
+        return redirect(url_for('helpdesk.ver_chamado', chamado_id=chamado_id))
+    
+    try:
+        # Primeiro excluir todas as respostas relacionadas (cascade já configurado no modelo)
+        db.session.delete(chamado)
+        db.session.commit()
+        flash('Chamado excluído com sucesso!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao excluir chamado. Tente novamente.', 'error')
+        return redirect(url_for('helpdesk.ver_chamado', chamado_id=chamado_id))
+    
+    # Redirecionar baseado no tipo de usuário
+    if user_type == 'administrador':
+        return redirect(url_for('helpdesk.dashboard_admin'))
+    else:
+        return redirect(url_for('helpdesk.dashboard_tecnico'))

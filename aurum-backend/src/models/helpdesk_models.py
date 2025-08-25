@@ -1,6 +1,7 @@
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from src.models.user import db
+from src.utils.timezone_utils import get_brazil_time
 
 class Usuario(db.Model):
     __tablename__ = 'helpdesk_usuarios'
@@ -13,7 +14,7 @@ class Usuario(db.Model):
     tipo_usuario = db.Column(db.String(20), nullable=False)  # administrador, tecnico, cliente
     empresa_id = db.Column(db.Integer, db.ForeignKey('helpdesk_empresas.id'), nullable=True)
     ativo = db.Column(db.Boolean, default=True)
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    data_criacao = db.Column(db.DateTime, default=get_brazil_time)
     
     # Relacionamentos
     empresa = db.relationship('Empresa', backref='usuarios')
@@ -38,7 +39,7 @@ class Empresa(db.Model):
     telefone = db.Column(db.String(20), nullable=False)
     cnpj = db.Column(db.String(20), unique=True, nullable=False)
     ativa = db.Column(db.Boolean, default=True)
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    data_criacao = db.Column(db.DateTime, default=get_brazil_time)
     
     # Relacionamentos
     chamados = db.relationship('Chamado', backref='empresa', lazy=True)
@@ -53,7 +54,7 @@ class Servico(db.Model):
     nome = db.Column(db.String(100), nullable=False)
     descricao = db.Column(db.Text)
     ativo = db.Column(db.Boolean, default=True)
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    data_criacao = db.Column(db.DateTime, default=get_brazil_time)
     
     # Relacionamentos
     chamados = db.relationship('Chamado', backref='servico', lazy=True)
@@ -69,7 +70,7 @@ class Chamado(db.Model):
     descricao = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(20), default='aberto')  # aberto, em_andamento, finalizado
     prioridade = db.Column(db.String(10), default='media')  # baixa, media, alta
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    data_criacao = db.Column(db.DateTime, default=get_brazil_time)
     data_finalizacao = db.Column(db.DateTime)
     
     # Chaves estrangeiras
@@ -89,7 +90,7 @@ class RespostaChamado(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     resposta = db.Column(db.Text, nullable=False)
-    data_resposta = db.Column(db.DateTime, default=datetime.utcnow)
+    data_resposta = db.Column(db.DateTime, default=get_brazil_time)
     
     # Chaves estrangeiras
     chamado_id = db.Column(db.Integer, db.ForeignKey('helpdesk_chamados.id'), nullable=False)

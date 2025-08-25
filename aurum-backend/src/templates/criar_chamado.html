@@ -34,7 +34,7 @@
                         </select>
                     </div>
                     
-                    {% if empresas %}
+                    {% if empresas and session.user_type in ['administrador', 'tecnico'] %}
                     <div class="mb-3">
                         <label for="empresa_id" class="form-label">Empresa (Opcional)</label>
                         <select class="form-select" id="empresa_id" name="empresa_id">
@@ -48,13 +48,19 @@
                     
                     {% if servicos %}
                     <div class="mb-3">
-                        <label for="servico_id" class="form-label">Serviço (Opcional)</label>
-                        <select class="form-select" id="servico_id" name="servico_id">
+                        <label for="servico_id" class="form-label">
+                            Serviço {% if session.user_type == 'cliente' %}*{% else %}(Opcional){% endif %}
+                        </label>
+                        <select class="form-select" id="servico_id" name="servico_id" 
+                                {% if session.user_type == 'cliente' %}required{% endif %}>
                             <option value="">Selecione...</option>
                             {% for servico in servicos %}
                             <option value="{{ servico.id }}">{{ servico.nome }}</option>
                             {% endfor %}
                         </select>
+                        {% if session.user_type == 'cliente' %}
+                        <small class="form-text text-muted">Selecione o tipo de serviço para seu chamado.</small>
+                        {% endif %}
                     </div>
                     {% endif %}
                     
