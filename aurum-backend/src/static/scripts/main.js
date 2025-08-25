@@ -203,10 +203,11 @@ document.addEventListener("DOMContentLoaded", function() {
             // Validate form data
             const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
             const subject = document.getElementById('subject').value.trim();
             const message = document.getElementById('message').value.trim();
             
-            if (!name || !email || !subject || !message) {
+            if (!name || !email || !phone || !subject || !message) {
                 showMessage("❌ Por favor, preencha todos os campos.", "error");
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
@@ -225,6 +226,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const formData = {
                 from_name: name,
                 from_email: email,
+                phone: phone,
                 subject: subject,
                 message: message,
                 to_email: 'contato@aurum.inf.br',

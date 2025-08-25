@@ -10,12 +10,14 @@ from src.models.client import Client
 from src.models.service_type import ServiceType
 from src.models.ticket import Ticket
 from src.models.ticket_response import TicketResponse
+from src.models.contact import Contact
 from src.routes.user import user_bp
 from src.routes.auth import auth_bp
 from src.routes.tickets import tickets_bp
 from src.routes.users import users_bp
 from src.routes.clients import clients_bp
 from src.routes.service_types import service_types_bp
+from src.routes.contact import contact_bp
 from src.models.helpdesk_models import Usuario, Empresa, Servico, Chamado, RespostaChamado
 from src.routes.helpdesk import helpdesk_bp
 from werkzeug.security import generate_password_hash
@@ -35,6 +37,7 @@ app.register_blueprint(tickets_bp, url_prefix='/api')
 app.register_blueprint(users_bp, url_prefix='/api')
 app.register_blueprint(clients_bp, url_prefix='/api')
 app.register_blueprint(service_types_bp, url_prefix='/api')
+app.register_blueprint(contact_bp, url_prefix='/api')
 app.register_blueprint(helpdesk_bp)
 
 # Database configurations
