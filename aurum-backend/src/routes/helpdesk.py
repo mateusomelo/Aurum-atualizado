@@ -40,7 +40,7 @@ def login():
 def logout():
     session.clear()
     flash('Logout realizado com sucesso!', 'success')
-    return redirect('/')
+    return redirect(url_for('helpdesk.login'))
 
 @helpdesk_bp.route('/dashboard/admin')
 @login_required

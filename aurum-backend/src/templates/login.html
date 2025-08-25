@@ -3,43 +3,358 @@
 {% block title %}Login - Aurum Chamados{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-4">
-        <div class="card">
-            <div class="card-header text-center">
-                <h4>
-                    <i class="fas fa-sign-in-alt me-2"></i>Login
-                </h4>
+<div class="login-page">
+    <div class="login-overlay"></div>
+    <div class="login-container">
+        <div class="login-form-wrapper">
+            <div class="login-header">
+                <h2>Aurum Sistema</h2>
+                <p>Faça login para acessar sua conta</p>
             </div>
-            <div class="card-body">
-                <form method="POST">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
+            
+            <form method="POST" class="login-form">
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="email" name="email" placeholder=" " required>
+                        <label for="email">Email</label>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Senha</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="password" name="password" placeholder=" " required>
+                        <label for="password">Senha</label>
+                        <i class="fas fa-eye password-toggle" id="togglePassword" title="Mostrar/Ocultar senha"></i>
                     </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-sign-in-alt me-2"></i>Entrar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        
-        <div class="card mt-3">
-            <div class="card-body text-center">
-                <p class="text-muted mb-2">Não tem uma conta ainda?</p>
-                <a href="/" class="btn btn-outline-primary">
-                    <i class="fas fa-globe me-2"></i>Visitar Site Principal
+                </div>
+                
+                <button type="submit" class="login-btn">
+                    <span>Entrar</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+            
+            <div class="login-footer">
+                <div class="divider">
+                    <span>ou</span>
+                </div>
+                <a href="/" class="site-link">
+                    <i class="fas fa-globe me-2"></i>
+                    Visitar Site Principal
                 </a>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.login-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: url('{{ url_for("static", filename="assets/aurum.jpeg") }}') center/cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.login-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(2px);
+}
+
+.login-container {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 420px;
+}
+
+.login-form-wrapper {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+
+.login-header h2 {
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.login-header p {
+    color: #ffffff;
+    font-size: 14px;
+    margin: 0;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ffffff;
+    font-size: 16px;
+    z-index: 2;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.password-toggle {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ffffff;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 2;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    transition: all 0.3s ease;
+}
+
+.password-toggle:hover {
+    color: #cccccc;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.input-wrapper input {
+    width: 100%;
+    height: 55px;
+    background: rgba(255, 255, 255, 0.25);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 15px;
+    padding: 0 20px 0 50px;
+    font-size: 16px;
+    color: #ffffff;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.input-wrapper input:focus {
+    outline: none;
+    border-color: #ffffff;
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+}
+
+.input-wrapper input::placeholder {
+    color: transparent;
+}
+
+.input-wrapper label {
+    position: absolute;
+    left: 50px;
+    top: -2px;
+    color: #ffffff;
+    font-size: 12px;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 0 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    transform: translateY(0);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.input-wrapper input:placeholder-shown + label {
+    top: 50%;
+    left: 50px;
+    font-size: 16px;
+    color: #ffffff;
+    background: transparent;
+    transform: translateY(-50%);
+    font-weight: normal;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.login-btn {
+    width: 100%;
+    height: 55px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 15px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, #333333 0%, #555555 100%);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.login-btn:active {
+    transform: translateY(0);
+}
+
+.login-footer {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.divider {
+    position: relative;
+    margin: 25px 0;
+    text-align: center;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.divider span {
+    background: rgba(0, 0, 0, 0.6);
+    color: #ffffff;
+    padding: 0 15px;
+    font-size: 14px;
+    position: relative;
+    z-index: 1;
+    border-radius: 4px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.site-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 12px 24px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: rgba(0, 0, 0, 0.4);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.site-link:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+/* Responsivo */
+@media (max-width: 480px) {
+    .login-form-wrapper {
+        padding: 30px 25px;
+        margin: 0 10px;
+    }
+    
+    .login-header h2 {
+        font-size: 24px;
+    }
+    
+    .input-wrapper input {
+        height: 50px;
+        font-size: 15px;
+    }
+    
+    .login-btn {
+        height: 50px;
+        font-size: 15px;
+    }
+}
+
+/* Animações */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-form-wrapper {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Override Bootstrap styles para esta página */
+.login-page .container-fluid,
+.login-page .admin-main-content,
+.login-page .admin-flash-messages {
+    display: none !important;
+}
+
+.login-page {
+    margin-left: 0 !important;
+}
+
+body:has(.login-page) .admin-sidebar,
+body:has(.login-page) .admin-navbar,
+body:has(.login-page) .admin-sidebar-overlay,
+body:has(.login-page) .admin-sidebar-toggle {
+    display: none !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    
+    togglePassword.addEventListener('click', function() {
+        // Alterna o tipo do input entre password e text
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        
+        // Alterna o ícone entre olho aberto e fechado
+        this.classList.toggle('fa-eye');
+        this.classList.toggle('fa-eye-slash');
+    });
+});
+</script>
 {% endblock %}
