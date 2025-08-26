@@ -592,22 +592,31 @@ def desativar_servico(servico_id):
 
 @helpdesk_bp.route('/relatorios')
 @login_required
-@admin_or_tecnico_required
 def relatorios():
     return render_template('relatorios.html')
 
 @helpdesk_bp.route('/relatorio/empresas')
 @login_required
-@admin_or_tecnico_required
 def relatorio_empresas():
     # Obter filtro da query string
     empresa_id = request.args.get('empresa_id', '')
+    user_type = session['user_type']
+    user_id = session['user_id']
     
-    # Buscar empresas baseado no filtro
-    if empresa_id:
-        empresas = Empresa.query.filter_by(id=int(empresa_id), ativa=True).all()
+    # Buscar empresas baseado no filtro e tipo de usuário
+    if user_type == 'cliente':
+        # Clientes só podem ver a empresa deles
+        usuario_atual = Usuario.query.get(user_id)
+        if usuario_atual and usuario_atual.empresa_id:
+            empresas = [usuario_atual.empresa]
+        else:
+            empresas = []
     else:
-        empresas = Empresa.query.filter_by(ativa=True).all()
+        # Administradores e técnicos podem ver todas as empresas
+        if empresa_id:
+            empresas = Empresa.query.filter_by(id=int(empresa_id), ativa=True).all()
+        else:
+            empresas = Empresa.query.filter_by(ativa=True).all()
     
     relatorio_empresas = []
     for empresa in empresas:
@@ -658,41 +667,69 @@ def relatorio_empresas():
 
 @helpdesk_bp.route('/relatorio/tecnicos')
 @login_required
-@admin_required
 def relatorio_tecnicos():
     # Obter filtro da query string
     tecnico_id = request.args.get('tecnico_id', '')
     
-    # Buscar técnicos baseado no filtro
+    # Buscar usuários baseado no filtro e tipo de usuário logado
+    user_type = session['user_type']
+    user_id = session['user_id']
+    
     if tecnico_id:
-        tecnicos = Usuario.query.filter_by(id=int(tecnico_id), tipo_usuario='tecnico', ativo=True).all()
+        if user_type == 'administrador':
+            # Administradores podem ver todos os usuários
+            tecnicos = Usuario.query.filter_by(id=int(tecnico_id), ativo=True).all()
+        elif user_type == 'tecnico':
+            # Técnicos só podem ver a si mesmos ou clientes no filtro
+            usuario_solicitado = Usuario.query.filter_by(id=int(tecnico_id), ativo=True).first()
+            if usuario_solicitado and (usuario_solicitado.id == user_id or usuario_solicitado.tipo_usuario == 'cliente'):
+                tecnicos = [usuario_solicitado]
+            else:
+                tecnicos = []
+        else:
+            # Clientes só podem ver a si mesmos no filtro
+            if int(tecnico_id) == user_id:
+                tecnicos = Usuario.query.filter_by(id=user_id, ativo=True).all()
+            else:
+                tecnicos = []
     else:
-        tecnicos = Usuario.query.filter_by(tipo_usuario='tecnico', ativo=True).all()
+        if user_type == 'administrador':
+            # Administradores podem ver todos os usuários
+            tecnicos = Usuario.query.filter_by(ativo=True).all()
+        elif user_type == 'tecnico':
+            # Técnicos veem a si mesmos e todos os clientes
+            tecnicos = Usuario.query.filter(
+                Usuario.ativo == True,
+                (Usuario.id == user_id) | (Usuario.tipo_usuario == 'cliente')
+            ).all()
+        else:
+            # Clientes veem apenas a si mesmos
+            tecnicos = Usuario.query.filter_by(id=user_id, ativo=True).all()
     
     relatorio_tecnicos = []
     for tecnico in tecnicos:
-        # Chamados atribuídos ao técnico
-        chamados_tecnico = Chamado.query.filter_by(tecnico_id=tecnico.id).all()
+        # Chamados criados pelo usuário
+        chamados_tecnico = Chamado.query.filter_by(usuario_id=tecnico.id).all()
         
-        # Estatísticas por empresa
-        empresas_atendidas = {}
+        # Estatísticas por técnico que atendeu os chamados deste usuário
+        tecnicos_que_atenderam = {}
         for chamado in chamados_tecnico:
-            if chamado.usuario and chamado.usuario.empresa:
-                empresa_nome = chamado.usuario.empresa.nome_empresa
-                if empresa_nome not in empresas_atendidas:
-                    empresas_atendidas[empresa_nome] = {
+            if chamado.tecnico:
+                tecnico_nome = chamado.tecnico.nome
+                if tecnico_nome not in tecnicos_que_atenderam:
+                    tecnicos_que_atenderam[tecnico_nome] = {
                         'total': 0,
                         'abertos': 0,
                         'em_andamento': 0,
                         'finalizados': 0
                     }
-                empresas_atendidas[empresa_nome]['total'] += 1
+                tecnicos_que_atenderam[tecnico_nome]['total'] += 1
                 if chamado.status == 'em_andamento':
-                    empresas_atendidas[empresa_nome]['em_andamento'] += 1
+                    tecnicos_que_atenderam[tecnico_nome]['em_andamento'] += 1
                 elif chamado.status == 'aberto':
-                    empresas_atendidas[empresa_nome]['abertos'] += 1
+                    tecnicos_que_atenderam[tecnico_nome]['abertos'] += 1
                 elif chamado.status == 'finalizado':
-                    empresas_atendidas[empresa_nome]['finalizados'] += 1
+                    tecnicos_que_atenderam[tecnico_nome]['finalizados'] += 1
         
         relatorio_tecnicos.append({
             'tecnico': tecnico,
@@ -700,7 +737,7 @@ def relatorio_tecnicos():
             'chamados_abertos': len([c for c in chamados_tecnico if c.status == 'aberto']),
             'chamados_andamento': len([c for c in chamados_tecnico if c.status == 'em_andamento']),
             'chamados_finalizados': len([c for c in chamados_tecnico if c.status == 'finalizado']),
-            'empresas_atendidas': empresas_atendidas,
+            'tecnicos_que_atenderam': tecnicos_que_atenderam,
             'chamados_recentes': sorted(chamados_tecnico, key=lambda x: x.data_criacao, reverse=True)[:5]
         })
     
@@ -708,16 +745,26 @@ def relatorio_tecnicos():
 
 @helpdesk_bp.route('/relatorio/empresas/export/<formato>')
 @login_required
-@admin_or_tecnico_required
 def export_relatorio_empresas(formato):
     # Obter filtro da query string
     empresa_id = request.args.get('empresa_id', '')
+    user_type = session['user_type']
+    user_id = session['user_id']
     
-    # Buscar empresas baseado no filtro
-    if empresa_id:
-        empresas = Empresa.query.filter_by(id=int(empresa_id), ativa=True).all()
+    # Buscar empresas baseado no filtro e tipo de usuário
+    if user_type == 'cliente':
+        # Clientes só podem ver a empresa deles
+        usuario_atual = Usuario.query.get(user_id)
+        if usuario_atual and usuario_atual.empresa_id:
+            empresas = [usuario_atual.empresa]
+        else:
+            empresas = []
     else:
-        empresas = Empresa.query.filter_by(ativa=True).all()
+        # Administradores e técnicos podem ver todas as empresas
+        if empresa_id:
+            empresas = Empresa.query.filter_by(id=int(empresa_id), ativa=True).all()
+        else:
+            empresas = Empresa.query.filter_by(ativa=True).all()
     
     relatorio_empresas = []
     for empresa in empresas:
@@ -784,39 +831,67 @@ def export_relatorio_empresas(formato):
 
 @helpdesk_bp.route('/relatorio/tecnicos/export/<formato>')
 @login_required
-@admin_required
 def export_relatorio_tecnicos(formato):
     # Obter filtro da query string
     tecnico_id = request.args.get('tecnico_id', '')
     
-    # Buscar técnicos baseado no filtro
+    # Buscar usuários baseado no filtro e tipo de usuário logado
+    user_type = session['user_type']
+    user_id = session['user_id']
+    
     if tecnico_id:
-        tecnicos = Usuario.query.filter_by(id=int(tecnico_id), tipo_usuario='tecnico', ativo=True).all()
+        if user_type == 'administrador':
+            # Administradores podem ver todos os usuários
+            tecnicos = Usuario.query.filter_by(id=int(tecnico_id), ativo=True).all()
+        elif user_type == 'tecnico':
+            # Técnicos só podem ver a si mesmos ou clientes no filtro
+            usuario_solicitado = Usuario.query.filter_by(id=int(tecnico_id), ativo=True).first()
+            if usuario_solicitado and (usuario_solicitado.id == user_id or usuario_solicitado.tipo_usuario == 'cliente'):
+                tecnicos = [usuario_solicitado]
+            else:
+                tecnicos = []
+        else:
+            # Clientes só podem ver a si mesmos no filtro
+            if int(tecnico_id) == user_id:
+                tecnicos = Usuario.query.filter_by(id=user_id, ativo=True).all()
+            else:
+                tecnicos = []
     else:
-        tecnicos = Usuario.query.filter_by(tipo_usuario='tecnico', ativo=True).all()
+        if user_type == 'administrador':
+            # Administradores podem ver todos os usuários
+            tecnicos = Usuario.query.filter_by(ativo=True).all()
+        elif user_type == 'tecnico':
+            # Técnicos veem a si mesmos e todos os clientes
+            tecnicos = Usuario.query.filter(
+                Usuario.ativo == True,
+                (Usuario.id == user_id) | (Usuario.tipo_usuario == 'cliente')
+            ).all()
+        else:
+            # Clientes veem apenas a si mesmos
+            tecnicos = Usuario.query.filter_by(id=user_id, ativo=True).all()
     
     relatorio_tecnicos = []
     for tecnico in tecnicos:
-        chamados_tecnico = Chamado.query.filter_by(tecnico_id=tecnico.id).all()
+        chamados_tecnico = Chamado.query.filter_by(usuario_id=tecnico.id).all()
         
-        empresas_atendidas = {}
+        tecnicos_que_atenderam = {}
         for chamado in chamados_tecnico:
-            if chamado.usuario and chamado.usuario.empresa:
-                empresa_nome = chamado.usuario.empresa.nome_empresa
-                if empresa_nome not in empresas_atendidas:
-                    empresas_atendidas[empresa_nome] = {
+            if chamado.tecnico:
+                tecnico_nome = chamado.tecnico.nome
+                if tecnico_nome not in tecnicos_que_atenderam:
+                    tecnicos_que_atenderam[tecnico_nome] = {
                         'total': 0,
                         'abertos': 0,
                         'em_andamento': 0,
                         'finalizados': 0
                     }
-                empresas_atendidas[empresa_nome]['total'] += 1
+                tecnicos_que_atenderam[tecnico_nome]['total'] += 1
                 if chamado.status == 'em_andamento':
-                    empresas_atendidas[empresa_nome]['em_andamento'] += 1
+                    tecnicos_que_atenderam[tecnico_nome]['em_andamento'] += 1
                 elif chamado.status == 'aberto':
-                    empresas_atendidas[empresa_nome]['abertos'] += 1
+                    tecnicos_que_atenderam[tecnico_nome]['abertos'] += 1
                 elif chamado.status == 'finalizado':
-                    empresas_atendidas[empresa_nome]['finalizados'] += 1
+                    tecnicos_que_atenderam[tecnico_nome]['finalizados'] += 1
         
         relatorio_tecnicos.append({
             'tecnico': tecnico,
@@ -824,7 +899,7 @@ def export_relatorio_tecnicos(formato):
             'chamados_abertos': len([c for c in chamados_tecnico if c.status == 'aberto']),
             'chamados_andamento': len([c for c in chamados_tecnico if c.status == 'em_andamento']),
             'chamados_finalizados': len([c for c in chamados_tecnico if c.status == 'finalizado']),
-            'empresas_atendidas': empresas_atendidas,
+            'tecnicos_que_atenderam': tecnicos_que_atenderam,
             'chamados_recentes': sorted(chamados_tecnico, key=lambda x: x.data_criacao, reverse=True)[:5]
         })
     

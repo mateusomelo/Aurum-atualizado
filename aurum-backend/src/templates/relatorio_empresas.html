@@ -137,9 +137,9 @@
         </div>
         
         <div class="row">
-            <!-- Usuários que abriram chamados -->
+            <!-- Todos os Usuários da Empresa -->
             <div class="col-md-6">
-                <h6>Usuários que Abriram Chamados</h6>
+                <h6>Todos os Usuários da Empresa</h6>
                 {% if empresa_data.usuarios_stats %}
                 <div class="table-responsive">
                     <table class="table table-sm">
@@ -154,30 +154,40 @@
                         </thead>
                         <tbody>
                             {% for user_stat in empresa_data.usuarios_stats %}
-                            {% if user_stat.total_chamados > 0 %}
                             <tr>
                                 <td>
-                                    <strong>{{ user_stat.usuario.nome }}</strong><br>
+                                    <strong>{{ user_stat.usuario.nome }} ({{ user_stat.usuario.tipo_usuario.title() }})</strong><br>
                                     <small class="text-muted">{{ user_stat.usuario.email }}</small>
                                 </td>
                                 <td class="text-center">{{ user_stat.total_chamados }}</td>
                                 <td class="text-center">
+                                    {% if user_stat.abertos > 0 %}
                                     <span class="badge bg-danger">{{ user_stat.abertos }}</span>
+                                    {% else %}
+                                    <span class="text-muted">0</span>
+                                    {% endif %}
                                 </td>
                                 <td class="text-center">
+                                    {% if user_stat.em_andamento > 0 %}
                                     <span class="badge bg-warning">{{ user_stat.em_andamento }}</span>
+                                    {% else %}
+                                    <span class="text-muted">0</span>
+                                    {% endif %}
                                 </td>
                                 <td class="text-center">
+                                    {% if user_stat.finalizados > 0 %}
                                     <span class="badge bg-success">{{ user_stat.finalizados }}</span>
+                                    {% else %}
+                                    <span class="text-muted">0</span>
+                                    {% endif %}
                                 </td>
                             </tr>
-                            {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted">Nenhum chamado aberto por esta empresa.</p>
+                <p class="text-muted">Nenhum usuário vinculado a esta empresa.</p>
                 {% endif %}
             </div>
             
@@ -199,7 +209,7 @@
                             {% for tecnico_stat in empresa_data.tecnicos_atenderam %}
                             <tr>
                                 <td>
-                                    <strong>{{ tecnico_stat.tecnico.nome }}</strong><br>
+                                    <strong>{{ tecnico_stat.tecnico.nome }} ({{ tecnico_stat.tecnico.tipo_usuario.title() }})</strong><br>
                                     <small class="text-muted">{{ tecnico_stat.tecnico.email }}</small>
                                 </td>
                                 <td class="text-center">{{ tecnico_stat.chamados_atendidos }}</td>

@@ -45,9 +45,22 @@ app.register_blueprint(helpdesk_bp)
 # APIs para os filtros dos relatórios
 @app.route('/helpdesk/dados/empresas')
 def api_dados_empresas():
-    from flask import jsonify
+    from flask import jsonify, session
     try:
-        empresas = Empresa.query.filter_by(ativa=True).all()
+        user_type = session.get('user_type')
+        user_id = session.get('user_id')
+        
+        if user_type == 'cliente':
+            # Clientes só podem ver sua própria empresa
+            usuario_atual = Usuario.query.get(user_id)
+            if usuario_atual and usuario_atual.empresa_id:
+                empresas = [usuario_atual.empresa]
+            else:
+                empresas = []
+        else:
+            # Administradores e técnicos podem ver todas as empresas
+            empresas = Empresa.query.filter_by(ativa=True).all()
+        
         resultado = [{
             'id': empresa.id,
             'nome_empresa': empresa.nome_empresa
@@ -58,13 +71,43 @@ def api_dados_empresas():
 
 @app.route('/helpdesk/dados/tecnicos')
 def api_dados_tecnicos():
-    from flask import jsonify
+    from flask import jsonify, session
     try:
-        tecnicos = Usuario.query.filter_by(tipo_usuario='tecnico', ativo=True).all()
-        resultado = [{
-            'id': tecnico.id,
-            'nome': tecnico.nome
-        } for tecnico in tecnicos]
+        # Verificar tipo de usuário e ID
+        user_type = session.get('user_type')
+        user_id = session.get('user_id')
+        
+        if user_type == 'administrador':
+            # Administradores podem ver todos os usuários
+            tecnicos = Usuario.query.filter_by(ativo=True).order_by(Usuario.tipo_usuario, Usuario.nome).all()
+            resultado = [{
+                'id': tecnico.id,
+                'nome': f"{tecnico.nome} ({tecnico.tipo_usuario.title()})"
+            } for tecnico in tecnicos]
+        elif user_type == 'tecnico':
+            # Técnicos veem a si mesmos e todos os clientes
+            tecnicos = Usuario.query.filter(
+                Usuario.ativo == True,
+                (Usuario.id == user_id) | (Usuario.tipo_usuario == 'cliente')
+            ).order_by(Usuario.tipo_usuario, Usuario.nome).all()
+            resultado = [{
+                'id': tecnico.id,
+                'nome': f"{tecnico.nome} ({tecnico.tipo_usuario.title()})"
+            } for tecnico in tecnicos]
+        elif user_type == 'cliente':
+            # Clientes veem apenas a si mesmos
+            tecnicos = Usuario.query.filter_by(id=user_id, ativo=True).all()
+            resultado = [{
+                'id': tecnico.id,
+                'nome': tecnico.nome
+            } for tecnico in tecnicos]
+        else:
+            # Outros usuários veem apenas técnicos
+            tecnicos = Usuario.query.filter_by(tipo_usuario='tecnico', ativo=True).all()
+            resultado = [{
+                'id': tecnico.id,
+                'nome': tecnico.nome
+            } for tecnico in tecnicos]
         return jsonify(resultado)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
