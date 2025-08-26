@@ -1,5 +1,5 @@
 from flask import render_template, request, redirect, url_for, session, flash, Blueprint
-from src.models.helpdesk_models import Usuario, Empresa, Servico, Chamado, RespostaChamado
+from src.models.helpdesk_models import Usuario, Empresa, Servico, Chamado, RespostaChamado, Notificacao
 from src.models.user import db
 from src.utils import login_required, admin_required, admin_or_tecnico_required
 from datetime import datetime
@@ -9,6 +9,59 @@ from flask import send_file
 import logging
 
 helpdesk_bp = Blueprint('helpdesk', __name__)
+
+def criar_notificacao_novo_chamado(chamado):
+    """Cria notificações para técnicos e administradores quando um novo chamado é aberto"""
+    print(f"DEBUG: Criando notificações para chamado ID: {chamado.id}")
+    
+    # Buscar todos os técnicos e administradores ativos
+    usuarios_para_notificar = Usuario.query.filter(
+        Usuario.ativo == True,
+        Usuario.tipo_usuario.in_(['tecnico', 'administrador'])
+    ).all()
+    
+    print(f"DEBUG: Encontrados {len(usuarios_para_notificar)} usuários para notificar")
+    
+    for usuario in usuarios_para_notificar:
+        print(f"DEBUG: Criando notificação para usuário: {usuario.nome} ({usuario.tipo_usuario})")
+        notificacao = Notificacao(
+            titulo=f"Novo chamado: {chamado.titulo}",
+            mensagem=f"Um novo chamado foi aberto por {chamado.usuario.nome} - Prioridade: {chamado.prioridade}",
+            tipo="novo_chamado",
+            usuario_id=usuario.id,
+            chamado_id=chamado.id
+        )
+        db.session.add(notificacao)
+    
+    db.session.commit()
+    print(f"DEBUG: Notificações criadas com sucesso!")
+
+@helpdesk_bp.route('/notificacoes')
+@login_required
+def listar_notificacoes():
+    """Lista notificações do usuário atual"""
+    user_id = session['user_id']
+    notificacoes = Notificacao.query.filter_by(usuario_id=user_id).order_by(Notificacao.data_criacao.desc()).limit(20).all()
+    return render_template('notificacoes.html', notificacoes=notificacoes)
+
+@helpdesk_bp.route('/notificacoes/marcar_lida/<int:notificacao_id>')
+@login_required
+def marcar_notificacao_lida(notificacao_id):
+    """Marca uma notificação como lida"""
+    notificacao = Notificacao.query.filter_by(id=notificacao_id, usuario_id=session['user_id']).first()
+    if notificacao:
+        notificacao.lida = True
+        db.session.commit()
+    return redirect(url_for('helpdesk.listar_notificacoes'))
+
+@helpdesk_bp.route('/api/notificacoes/nao_lidas')
+@login_required
+def contar_notificacoes_nao_lidas():
+    """API para contar notificações não lidas"""
+    from flask import jsonify
+    user_id = session['user_id']
+    count = Notificacao.query.filter_by(usuario_id=user_id, lida=False).count()
+    return jsonify({'count': count})
 
 @helpdesk_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -276,6 +329,12 @@ def criar_chamado():
         
         db.session.add(novo_chamado)
         db.session.commit()
+        
+        # Criar notificações para técnicos e administradores
+        try:
+            criar_notificacao_novo_chamado(novo_chamado)
+        except Exception as e:
+            print(f"Erro ao criar notificação: {e}")  # Log do erro, mas não bloqueia o chamado
         
         flash('Chamado criado com sucesso!', 'success')
         

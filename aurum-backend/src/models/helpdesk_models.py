@@ -101,3 +101,24 @@ class RespostaChamado(db.Model):
     
     def __repr__(self):
         return f'<Resposta para Chamado {self.chamado_id}>'
+
+class Notificacao(db.Model):
+    __tablename__ = 'helpdesk_notificacoes'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(200), nullable=False)
+    mensagem = db.Column(db.Text, nullable=False)
+    tipo = db.Column(db.String(50), nullable=False)  # novo_chamado, chamado_atribuido, etc
+    lida = db.Column(db.Boolean, default=False)
+    data_criacao = db.Column(db.DateTime, default=get_brazil_time)
+    
+    # Chaves estrangeiras
+    usuario_id = db.Column(db.Integer, db.ForeignKey('helpdesk_usuarios.id'), nullable=False)
+    chamado_id = db.Column(db.Integer, db.ForeignKey('helpdesk_chamados.id'), nullable=True)
+    
+    # Relacionamentos
+    usuario = db.relationship('Usuario', backref='notificacoes')
+    chamado = db.relationship('Chamado', backref='notificacoes')
+    
+    def __repr__(self):
+        return f'<Notificacao {self.titulo} para Usuario {self.usuario_id}>'
