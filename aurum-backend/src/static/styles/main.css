@@ -57,8 +57,8 @@ body {
 }
 
 .nav-logo img {
-    height: 40px;
-    width: auto;
+    height: 120px;
+    width: 300px;
     object-fit: contain;
 }
 
