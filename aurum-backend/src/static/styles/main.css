@@ -43,16 +43,74 @@ body {
     align-items: center;
 }
 
+.nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .nav-logo h1 {
     color: #2563EB;
     font-size: 1.5rem;
     font-weight: bold;
+    margin: 0;
 }
+
 .nav-logo img {
-    width: 70px;
-    height: 50px;
-    border-radius: 50%;
-    margin-right: 10px;
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+}
+
+/* Responsividade para Logo + Texto */
+@media (max-width: 768px) {
+    .nav-logo {
+        gap: 8px;
+    }
+    
+    .nav-logo img {
+        height: 32px;
+    }
+    
+    .nav-logo h1 {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-container {
+        padding: 0 15px;
+    }
+    
+    .nav-logo {
+        gap: 6px;
+    }
+    
+    .nav-logo img {
+        height: 28px;
+    }
+    
+    .nav-logo h1 {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .nav-container {
+        padding: 0 12px;
+    }
+    
+    .nav-logo {
+        gap: 4px;
+    }
+    
+    .nav-logo img {
+        height: 24px;
+    }
+    
+    .nav-logo h1 {
+        font-size: 1rem;
+    }
 }
 
 .nav-menu {
