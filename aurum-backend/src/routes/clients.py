@@ -102,7 +102,7 @@ def update_client(client_id):
 
 @clients_bp.route('/clients/<int:client_id>', methods=['DELETE'])
 def delete_client(client_id):
-    """Exclui um cliente (soft delete - marca como inativo)"""
+    """Exclui um cliente (exclusão permanente do banco de dados)"""
     if not check_admin_or_tech_permission():
         return jsonify({'error': 'Acesso negado. Apenas administradores e técnicos podem acessar esta funcionalidade.'}), 403
     
@@ -111,8 +111,8 @@ def delete_client(client_id):
         if not client:
             return jsonify({'error': 'Cliente não encontrado'}), 404
         
-        # Soft delete - marca como inativo
-        client.active = False
+        # Exclusão permanente do banco de dados
+        db.session.delete(client)
         db.session.commit()
         
         return jsonify({'message': 'Cliente excluído com sucesso'}), 200

@@ -87,7 +87,7 @@ def update_service_type(service_type_id):
 
 @service_types_bp.route('/service-types/<int:service_type_id>', methods=['DELETE'])
 def delete_service_type(service_type_id):
-    """Exclui um tipo de serviço (soft delete - marca como inativo)"""
+    """Exclui um tipo de serviço (exclusão permanente do banco de dados)"""
     if not check_admin_permission():
         return jsonify({'error': 'Acesso negado. Apenas administradores podem acessar esta funcionalidade.'}), 403
     
@@ -96,8 +96,8 @@ def delete_service_type(service_type_id):
         if not service_type:
             return jsonify({'error': 'Tipo de serviço não encontrado'}), 404
         
-        # Soft delete - marca como inativo
-        service_type.active = False
+        # Exclusão permanente do banco de dados
+        db.session.delete(service_type)
         db.session.commit()
         
         return jsonify({'message': 'Tipo de serviço excluído com sucesso'}), 200
