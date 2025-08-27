@@ -48,14 +48,46 @@ class RealTimeNotificationManager {
 
     async requestPermissions() {
         if ('Notification' in window) {
+            // Verificar se já temos permissão
+            if (Notification.permission === 'granted') {
+                this.permissionGranted = true;
+                console.log('✅ Permissão para notificações já concedida');
+                return;
+            }
+            
+            // Verificar se o usuário já negou anteriormente
+            if (Notification.permission === 'denied') {
+                console.log('❌ Permissão negada anteriormente - não solicitará novamente');
+                this.showPermissionDeniedMessage();
+                return;
+            }
+            
+            // Verificar se já perguntamos recentemente (localStorage)
+            const lastAsked = localStorage.getItem('notification_permission_asked');
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000; // 24 horas em ms
+            
+            if (lastAsked && (now - parseInt(lastAsked)) < oneDay) {
+                console.log('⏰ Aguardando para pedir permissão novamente (já perguntado recentemente)');
+                return;
+            }
+            
+            // Solicitar permissão
+            console.log('🔔 Solicitando permissão para notificações...');
             const permission = await Notification.requestPermission();
             this.permissionGranted = permission === 'granted';
             
+            // Salvar que perguntamos
+            localStorage.setItem('notification_permission_asked', now.toString());
+            
             if (this.permissionGranted) {
                 console.log('✅ Permissão para notificações concedida');
+                localStorage.setItem('notification_permission_granted', 'true');
                 this.showWelcomeNotification();
             } else {
                 console.warn('⚠️ Permissão para notificações negada');
+                localStorage.setItem('notification_permission_granted', 'false');
+                this.showPermissionDeniedMessage();
             }
         } else {
             console.warn('⚠️ Navegador não suporta notificações');
@@ -74,6 +106,28 @@ class RealTimeNotificationManager {
 
             setTimeout(() => notification.close(), 3000);
         }
+    }
+    
+    showPermissionDeniedMessage() {
+        // Criar um aviso discreto na página
+        const notice = document.createElement('div');
+        notice.className = 'notification-permission-notice';
+        notice.innerHTML = `
+            <div class="notice-content">
+                <span class="notice-icon">🔔</span>
+                <span class="notice-text">Notificações desabilitadas. Para ativar, clique no ícone de sino na barra do navegador.</span>
+                <button class="notice-close" onclick="this.parentElement.parentElement.remove()">×</button>
+            </div>
+        `;
+        
+        document.body.appendChild(notice);
+        
+        // Auto-remover após 10 segundos
+        setTimeout(() => {
+            if (notice.parentNode) {
+                notice.remove();
+            }
+        }, 10000);
     }
 
     setupNotificationSound() {
@@ -330,6 +384,25 @@ class RealTimeNotificationManager {
         }, 30000); // A cada 30 segundos quando offline
     }
 
+    // Método público para reativar notificações
+    async reactivateNotifications() {
+        console.log('🔄 Reativando notificações...');
+        
+        // Limpar localStorage
+        localStorage.removeItem('notification_permission_asked');
+        localStorage.removeItem('notification_permission_granted');
+        
+        // Solicitar permissão novamente
+        await this.requestPermissions();
+        
+        if (this.permissionGranted) {
+            this.showWelcomeNotification();
+            return true;
+        }
+        
+        return false;
+    }
+    
     // Método público para testar
     testNotification() {
         const testData = {
@@ -343,6 +416,17 @@ class RealTimeNotificationManager {
         };
         
         this.handleNewTicketNotification(testData);
+    }
+    
+    // Método público para verificar status
+    getStatus() {
+        return {
+            permissionGranted: this.permissionGranted,
+            isConnected: this.isConnected,
+            userType: this.userType,
+            browserSupported: 'Notification' in window,
+            permission: Notification.permission
+        };
     }
 }
 
@@ -447,6 +531,67 @@ notificationStyles.textContent = `
     #notification-status.disconnected {
         background-color: #dc3545;
         box-shadow: 0 0 3px #dc3545;
+    }
+    
+    .notification-permission-notice {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #ffc107 0%, #ff8800 100%);
+        color: #333;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        z-index: 10001;
+        animation: slideDown 0.3s ease;
+    }
+    
+    .notice-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+    
+    .notice-icon {
+        font-size: 20px;
+    }
+    
+    .notice-text {
+        font-size: 14px;
+        font-weight: 500;
+        flex: 1;
+    }
+    
+    .notice-close {
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.2s;
+        color: #333;
+    }
+    
+    .notice-close:hover {
+        background: rgba(0,0,0,0.1);
+    }
+    
+    @keyframes slideDown {
+        from {
+            transform: translateX(-50%) translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
     }
 `;
 document.head.appendChild(notificationStyles);

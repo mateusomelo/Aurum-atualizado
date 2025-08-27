@@ -7,6 +7,8 @@ from src.utils.timezone_utils import get_brazil_time
 from src.utils.export_utils import ReportExporter
 from flask import send_file
 import logging
+from src.utils.activity_logger import activity_logger, log_endpoint_access
+from src.utils.debug_logging import debug_session_info, debug_print
 
 helpdesk_bp = Blueprint('helpdesk', __name__)
 
@@ -99,9 +101,26 @@ def login():
         user = Usuario.query.filter_by(email=email, ativo=True).first()
         
         if user and user.check_password(password):
+            # Debug antes de setar a sessão
+            debug_print(f"🔐 Login bem-sucedido para: {user.nome} ({user.email})")
+            
             session['user_id'] = user.id
             session['user_name'] = user.nome
             session['user_type'] = user.tipo_usuario
+            session['user_email'] = user.email
+            
+            # Debug após setar a sessão
+            debug_print(f"📝 Sessão configurada - user_id: {session.get('user_id')}")
+            debug_session_info()
+            
+            # Log de login bem-sucedido
+            debug_print("🎯 Tentando registrar log de login...")
+            activity_logger.log_login(
+                user_id=user.id,
+                user_name=user.nome,
+                user_type=user.tipo_usuario,
+                success=True
+            )
             
             flash('Login realizado com sucesso!', 'success')
             
@@ -112,12 +131,29 @@ def login():
             else:
                 return redirect(url_for('helpdesk.dashboard_cliente'))
         else:
+            # Log de falha no login
+            user_name = user.nome if user else email
+            activity_logger.log_login(
+                user_id=user.id if user else None,
+                user_name=user_name,
+                user_type=None,
+                success=False,
+                reason="Email ou senha inválidos"
+            )
+            
             flash('Email ou senha inválidos!', 'error')
     
     return render_template('login.html')
 
 @helpdesk_bp.route('/logout')
 def logout():
+    # Log de logout antes de limpar sessão
+    if 'user_id' in session:
+        activity_logger.log_logout(
+            user_id=session['user_id'],
+            user_name=session.get('user_name', 'Usuário desconhecido')
+        )
+    
     session.clear()
     flash('Logout realizado com sucesso!', 'success')
     return redirect(url_for('helpdesk.login'))
@@ -126,6 +162,12 @@ def logout():
 @login_required
 @admin_required
 def dashboard_admin():
+    # Log do acesso ao dashboard admin
+    activity_logger.log_view(
+        module="dashboard",
+        description="Acessou dashboard do administrador"
+    )
+    
     # Estatísticas para gráficos
     total_chamados = Chamado.query.count()
     chamados_abertos = Chamado.query.filter_by(status='aberto').count()
@@ -357,6 +399,22 @@ def criar_chamado():
         db.session.add(novo_chamado)
         db.session.commit()
         
+        # Log da criação do chamado
+        activity_logger.log_create(
+            module="chamados",
+            entity_type="Chamado",
+            entity_id=novo_chamado.id,
+            description=f"Chamado '{novo_chamado.titulo}' criado com prioridade {novo_chamado.prioridade}",
+            new_values={
+                'titulo': novo_chamado.titulo,
+                'descricao': novo_chamado.descricao,
+                'prioridade': novo_chamado.prioridade,
+                'status': novo_chamado.status,
+                'empresa_id': novo_chamado.empresa_id,
+                'servico_id': novo_chamado.servico_id
+            }
+        )
+        
         # Criar notificações para técnicos e administradores
         try:
             criar_notificacao_novo_chamado(novo_chamado)
@@ -398,6 +456,14 @@ def criar_chamado():
 @login_required
 def ver_chamado(chamado_id):
     chamado = Chamado.query.get_or_404(chamado_id)
+    
+    # Log da visualização do chamado
+    activity_logger.log_view(
+        module="chamados",
+        entity_type="Chamado",
+        entity_id=chamado_id,
+        description=f"Visualizou chamado '{chamado.titulo}' (Status: {chamado.status})"
+    )
     
     # Verificar permissões
     user_type = session['user_type']
@@ -572,6 +638,15 @@ def finalizar_chamado(chamado_id):
 @admin_or_tecnico_required
 def ver_usuario(usuario_id):
     usuario = Usuario.query.get_or_404(usuario_id)
+    
+    # Log da visualização do usuário
+    activity_logger.log_view(
+        module="usuarios",
+        entity_type="Usuario",
+        entity_id=usuario_id,
+        description=f"Visualizou usuário '{usuario.nome}' ({usuario.email})"
+    )
+    
     return render_template('ver_usuario.html', usuario=usuario)
 
 @helpdesk_bp.route('/usuario/<int:usuario_id>/editar', methods=['GET', 'POST'])
@@ -586,6 +661,15 @@ def editar_usuario(usuario_id):
         return redirect(url_for('helpdesk.listar_usuarios'))
     
     if request.method == 'POST':
+        # Capturar valores antigos para log
+        old_values = {
+            'nome': usuario.nome,
+            'email': usuario.email,
+            'telefone': usuario.telefone,
+            'tipo_usuario': usuario.tipo_usuario,
+            'empresa_id': usuario.empresa_id
+        }
+        
         usuario.nome = request.form['nome']
         usuario.email = request.form['email']
         usuario.telefone = request.form['telefone']
@@ -594,10 +678,32 @@ def editar_usuario(usuario_id):
             usuario.tipo_usuario = request.form['tipo_usuario']
             usuario.empresa_id = request.form.get('empresa_id') or None
         
-        if request.form.get('senha'):
+        senha_alterada = bool(request.form.get('senha'))
+        if senha_alterada:
             usuario.set_password(request.form['senha'])
         
+        # Capturar novos valores para log
+        new_values = {
+            'nome': usuario.nome,
+            'email': usuario.email,
+            'telefone': usuario.telefone,
+            'tipo_usuario': usuario.tipo_usuario,
+            'empresa_id': usuario.empresa_id,
+            'senha_alterada': senha_alterada
+        }
+        
         db.session.commit()
+        
+        # Log da edição do usuário
+        activity_logger.log_update(
+            module="usuarios",
+            entity_type="Usuario",
+            entity_id=usuario.id,
+            description=f"Editou usuário '{usuario.nome}' ({usuario.email})",
+            old_values=old_values,
+            new_values=new_values
+        )
+        
         flash('Usuário atualizado com sucesso!', 'success')
         return redirect(url_for('helpdesk.ver_usuario', usuario_id=usuario_id))
     
@@ -615,8 +721,22 @@ def desativar_usuario(usuario_id):
         flash('Técnicos só podem desativar usuários do tipo cliente!', 'error')
         return redirect(url_for('helpdesk.listar_usuarios'))
     
+    # Capturar dados para log antes da alteração
+    old_values = {'ativo': usuario.ativo}
+    
     usuario.ativo = False
     db.session.commit()
+    
+    # Log da desativação do usuário
+    activity_logger.log_update(
+        module="usuarios",
+        entity_type="Usuario", 
+        entity_id=usuario.id,
+        description=f"Desativou usuário '{usuario.nome}' ({usuario.email})",
+        old_values=old_values,
+        new_values={'ativo': False}
+    )
+    
     flash('Usuário desativado com sucesso!', 'success')
     return redirect(url_for('helpdesk.listar_usuarios'))
 
@@ -626,6 +746,15 @@ def desativar_usuario(usuario_id):
 @admin_or_tecnico_required
 def ver_empresa(empresa_id):
     empresa = Empresa.query.get_or_404(empresa_id)
+    
+    # Log da visualização da empresa
+    activity_logger.log_view(
+        module="empresas",
+        entity_type="Empresa", 
+        entity_id=empresa_id,
+        description=f"Visualizou empresa '{empresa.nome_empresa}' (CNPJ: {empresa.cnpj})"
+    )
+    
     return render_template('ver_empresa.html', empresa=empresa)
 
 @helpdesk_bp.route('/empresa/<int:empresa_id>/editar', methods=['GET', 'POST'])
@@ -635,12 +764,39 @@ def editar_empresa(empresa_id):
     empresa = Empresa.query.get_or_404(empresa_id)
     
     if request.method == 'POST':
+        # Capturar valores antigos para log
+        old_values = {
+            'nome_empresa': empresa.nome_empresa,
+            'organizador': empresa.organizador,
+            'telefone': empresa.telefone,
+            'cnpj': empresa.cnpj
+        }
+        
         empresa.nome_empresa = request.form['nome_empresa']
         empresa.organizador = request.form['organizador']
         empresa.telefone = request.form['telefone']
         empresa.cnpj = request.form['cnpj']
         
+        # Capturar novos valores para log
+        new_values = {
+            'nome_empresa': empresa.nome_empresa,
+            'organizador': empresa.organizador,
+            'telefone': empresa.telefone,
+            'cnpj': empresa.cnpj
+        }
+        
         db.session.commit()
+        
+        # Log da edição da empresa
+        activity_logger.log_update(
+            module="empresas",
+            entity_type="Empresa",
+            entity_id=empresa.id,
+            description=f"Editou empresa '{empresa.nome_empresa}' (CNPJ: {empresa.cnpj})",
+            old_values=old_values,
+            new_values=new_values
+        )
+        
         flash('Empresa atualizada com sucesso!', 'success')
         return redirect(url_for('helpdesk.ver_empresa', empresa_id=empresa_id))
     

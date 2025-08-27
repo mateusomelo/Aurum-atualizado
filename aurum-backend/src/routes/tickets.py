@@ -180,6 +180,15 @@ def update_ticket(ticket_id):
         
         data = request.get_json()
         
+        # Capturar valores antigos para log
+        old_values = {
+            'title': ticket.title,
+            'description': ticket.description,
+            'priority': ticket.priority,
+            'status': ticket.status,
+            'assigned_to': ticket.assigned_to
+        }
+        
         # Campos que podem ser atualizados
         if 'title' in data:
             ticket.title = data['title']
@@ -195,8 +204,28 @@ def update_ticket(ticket_id):
             if 'assigned_to' in data:
                 ticket.assigned_to = data['assigned_to']
         
+        # Capturar novos valores para log
+        new_values = {
+            'title': ticket.title,
+            'description': ticket.description,
+            'priority': ticket.priority,
+            'status': ticket.status,
+            'assigned_to': ticket.assigned_to
+        }
+        
         ticket.updated_at = datetime.utcnow()
         db.session.commit()
+        
+        # Log da atualização do ticket
+        from src.utils.activity_logger import activity_logger
+        activity_logger.log_update(
+            module="tickets",
+            entity_type="Ticket",
+            entity_id=ticket.id,
+            description=f"Atualizou ticket '{ticket.title}' (Status: {ticket.status})",
+            old_values=old_values,
+            new_values=new_values
+        )
         
         return jsonify({
             'message': 'Chamado atualizado com sucesso',
@@ -223,8 +252,29 @@ def delete_ticket(ticket_id):
         if user_profile != 'administrador' and ticket.user_id != user_id:
             return jsonify({'error': 'Sem permissão para deletar este chamado'}), 403
         
+        # Capturar dados para log antes de deletar
+        old_values = {
+            'title': ticket.title,
+            'description': ticket.description,
+            'priority': ticket.priority,
+            'status': ticket.status,
+            'service_type': ticket.service_type,
+            'user_id': ticket.user_id,
+            'assigned_to': ticket.assigned_to
+        }
+        
         db.session.delete(ticket)
         db.session.commit()
+        
+        # Log da deleção do ticket
+        from src.utils.activity_logger import activity_logger
+        activity_logger.log_delete(
+            module="tickets",
+            entity_type="Ticket",
+            entity_id=ticket_id,
+            description=f"Deletou ticket '{old_values['title']}' (Status: {old_values['status']})",
+            old_values=old_values
+        )
         
         return jsonify({'message': 'Chamado deletado com sucesso'}), 200
         

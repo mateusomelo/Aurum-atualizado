@@ -16,6 +16,47 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/helpdesk.css') }}">
+    
+    <!-- Universal Logger - Captura TODOS os cliques -->
+    <script src="{{ url_for('static', filename='js/universal-logger.js') }}"></script>
+    
+    <!-- Funções globais -->
+    <script>
+        // Função global para reativar notificações
+        async function reactivateNotifications() {
+            if (window.realTimeNotifications) {
+                const success = await window.realTimeNotifications.reactivateNotifications();
+                if (success) {
+                    alert('✅ Notificações reativadas com sucesso!');
+                } else {
+                    alert('❌ Não foi possível reativar as notificações. Verifique as configurações do navegador.');
+                }
+            } else {
+                alert('⚠️ Sistema de notificações não está disponível.');
+            }
+        }
+        
+        // Função global para testar notificações
+        function testNotifications() {
+            if (window.realTimeNotifications) {
+                window.realTimeNotifications.testNotification();
+            } else {
+                alert('⚠️ Sistema de notificações não está disponível.');
+            }
+        }
+        
+        // Função global para verificar status das notificações
+        function getNotificationStatus() {
+            if (window.realTimeNotifications) {
+                const status = window.realTimeNotifications.getStatus();
+                console.table(status);
+                return status;
+            } else {
+                console.log('Sistema de notificações não disponível');
+                return null;
+            }
+        }
+    </script>
 </head>
 <body data-user-type="{{ session.user_type }}">
     <!-- User Sidebar -->
@@ -123,6 +164,13 @@
                         </a></li>
                     </ul>
                 </div>
+            </li>
+
+            <!-- Logs do Sistema (apenas para administradores) -->
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('activity_logs.listar_logs') }}">
+                    <i class="fas fa-history"></i>Logs de Atividade
+                </a>
             </li>
             
             {% elif session.user_type == 'tecnico' %}
