@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Teste de Notificações{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>🔔 Teste de Notificações</h2>
+            <p>Use esta página para testar o sistema de notificações.</p>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Informações do Sistema</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Tipo de Usuário:</strong> <span id="user-type">{{ session.user_type }}</span></p>
+                    <p><strong>Nome:</strong> {{ session.user_name }}</p>
+                    <p><strong>Sistema Ativo:</strong> <span id="system-status">Verificando...</span></p>
+                    <p><strong>Permissões:</strong> <span id="permissions-status">Verificando...</span></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Testes Manuais</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-primary mb-2" onclick="testNotification()">
+                        🧪 Testar Notificação
+                    </button><br>
+                    
+                    <button class="btn btn-info mb-2" onclick="checkAPI()">
+                        🔍 Verificar API
+                    </button><br>
+                    
+                    <button class="btn btn-warning mb-2" onclick="requestPermissions()">
+                        🔐 Solicitar Permissões
+                    </button><br>
+                    
+                    <button class="btn btn-success mb-2" onclick="createTestTicket()">
+                        🎫 Criar Chamado de Teste
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Console de Debug</h5>
+                </div>
+                <div class="card-body">
+                    <div id="debug-console" style="background: #f8f9fa; padding: 10px; border-radius: 5px; height: 300px; overflow-y: scroll; font-family: monospace; font-size: 12px;">
+                        <div>🚀 Sistema iniciado...</div>
+                    </div>
+                    <button class="btn btn-secondary mt-2" onclick="clearConsole()">Limpar Console</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Funções de teste
+function log(message) {
+    const console = document.getElementById('debug-console');
+    const time = new Date().toLocaleTimeString();
+    console.innerHTML += `<div>[${time}] ${message}</div>`;
+    console.scrollTop = console.scrollHeight;
+}
+
+function clearConsole() {
+    document.getElementById('debug-console').innerHTML = '<div>🚀 Console limpo...</div>';
+}
+
+async function testNotification() {
+    log('🧪 Testando notificação...');
+    
+    if (window.simpleNotifications) {
+        window.simpleNotifications.test();
+        log('✅ Teste executado via simpleNotifications');
+    } else if (window.testNotifications) {
+        window.testNotifications();
+        log('✅ Teste executado via testNotifications');
+    } else {
+        log('❌ Sistema de notificações não encontrado');
+        alert('Sistema de notificações não carregado!');
+    }
+}
+
+async function checkAPI() {
+    log('🔍 Verificando API...');
+    
+    try {
+        const response = await fetch('/api/notificacoes/nao_lidas');
+        const data = await response.json();
+        
+        log(`✅ API responde: ${JSON.stringify(data)}`);
+        
+        document.getElementById('system-status').textContent = 
+            response.ok ? '✅ Funcionando' : '❌ Com problemas';
+            
+    } catch (error) {
+        log(`❌ Erro na API: ${error.message}`);
+        document.getElementById('system-status').textContent = '❌ Erro';
+    }
+}
+
+async function requestPermissions() {
+    log('🔐 Solicitando permissões...');
+    
+    if ('Notification' in window) {
+        try {
+            const permission = await Notification.requestPermission();
+            log(`✅ Permissão: ${permission}`);
+            
+            document.getElementById('permissions-status').textContent = 
+                permission === 'granted' ? '✅ Concedidas' : '❌ Negadas';
+                
+        } catch (error) {
+            log(`❌ Erro ao solicitar permissões: ${error.message}`);
+        }
+    } else {
+        log('❌ Navegador não suporta notificações');
+        document.getElementById('permissions-status').textContent = '❌ Não suportadas';
+    }
+}
+
+async function createTestTicket() {
+    log('🎫 Criando chamado de teste...');
+    
+    try {
+        // Redirecionar para página de criar chamado
+        window.location.href = '/criar_chamado';
+        
+    } catch (error) {
+        log(`❌ Erro: ${error.message}`);
+    }
+}
+
+// Verificações iniciais
+document.addEventListener('DOMContentLoaded', function() {
+    log('📝 Página carregada, verificando sistema...');
+    
+    // Verificar tipo de usuário
+    const userType = document.body.getAttribute('data-user-type');
+    log(`👤 Tipo de usuário: ${userType}`);
+    
+    // Verificar se sistema está carregado
+    setTimeout(() => {
+        if (window.simpleNotifications) {
+            log('✅ simpleNotifications carregado');
+            document.getElementById('system-status').textContent = '✅ Ativo';
+        } else {
+            log('❌ simpleNotifications não encontrado');
+            document.getElementById('system-status').textContent = '❌ Inativo';
+        }
+        
+        // Verificar permissões
+        if ('Notification' in window) {
+            const permission = Notification.permission;
+            log(`🔐 Permissões atuais: ${permission}`);
+            document.getElementById('permissions-status').textContent = 
+                permission === 'granted' ? '✅ Concedidas' : 
+                permission === 'denied' ? '❌ Negadas' : '⚠️ Não solicitadas';
+        }
+    }, 2000);
+    
+    // Verificar API automaticamente
+    setTimeout(checkAPI, 3000);
+});
+</script>
+{% endblock %}

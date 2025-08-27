@@ -12,7 +12,8 @@ helpdesk_bp = Blueprint('helpdesk', __name__)
 
 def criar_notificacao_novo_chamado(chamado):
     """Cria notificações para técnicos e administradores quando um novo chamado é aberto"""
-    print(f"DEBUG: Criando notificações para chamado ID: {chamado.id}")
+    print(f"🔔 DEBUG: Criando notificações para chamado ID: {chamado.id}")
+    print(f"🔔 DEBUG: Título do chamado: {chamado.titulo}")
     
     # Buscar todos os técnicos e administradores ativos
     usuarios_para_notificar = Usuario.query.filter(
@@ -20,21 +21,34 @@ def criar_notificacao_novo_chamado(chamado):
         Usuario.tipo_usuario.in_(['tecnico', 'administrador'])
     ).all()
     
-    print(f"DEBUG: Encontrados {len(usuarios_para_notificar)} usuários para notificar")
+    print(f"🔔 DEBUG: Encontrados {len(usuarios_para_notificar)} usuários para notificar")
     
     for usuario in usuarios_para_notificar:
-        print(f"DEBUG: Criando notificação para usuário: {usuario.nome} ({usuario.tipo_usuario})")
-        notificacao = Notificacao(
-            titulo=f"Novo chamado: {chamado.titulo}",
-            mensagem=f"Um novo chamado foi aberto por {chamado.usuario.nome} - Prioridade: {chamado.prioridade}",
-            tipo="novo_chamado",
-            usuario_id=usuario.id,
-            chamado_id=chamado.id
-        )
-        db.session.add(notificacao)
+        print(f"🔔 DEBUG: Criando notificação para usuário: {usuario.nome} ({usuario.tipo_usuario})")
+        try:
+            notificacao = Notificacao(
+                titulo=f"Novo chamado: {chamado.titulo}",
+                mensagem=f"Um novo chamado foi aberto por {chamado.usuario.nome} - Prioridade: {chamado.prioridade}",
+                tipo="novo_chamado",
+                usuario_id=usuario.id,
+                chamado_id=chamado.id
+            )
+            db.session.add(notificacao)
+            print(f"🔔 DEBUG: Notificação criada para {usuario.nome}")
+        except Exception as e:
+            print(f"🔔 ERROR: Erro ao criar notificação para {usuario.nome}: {e}")
     
-    db.session.commit()
-    print(f"DEBUG: Notificações criadas com sucesso!")
+    try:
+        db.session.commit()
+        print(f"🔔 DEBUG: Notificações salvas no banco com sucesso!")
+        
+        # Verificar se foram salvas
+        total_notificacoes = Notificacao.query.count()
+        print(f"🔔 DEBUG: Total de notificações no banco: {total_notificacoes}")
+        
+    except Exception as e:
+        print(f"🔔 ERROR: Erro ao salvar notificações no banco: {e}")
+        db.session.rollback()
 
 @helpdesk_bp.route('/notificacoes')
 @login_required
@@ -60,8 +74,21 @@ def contar_notificacoes_nao_lidas():
     """API para contar notificações não lidas"""
     from flask import jsonify
     user_id = session['user_id']
+    user_type = session.get('user_type', 'unknown')
+    
+    print(f"🔔 API DEBUG: Usuário {user_id} ({user_type}) consultando notificações")
+    
     count = Notificacao.query.filter_by(usuario_id=user_id, lida=False).count()
-    return jsonify({'count': count})
+    total = Notificacao.query.filter_by(usuario_id=user_id).count()
+    
+    print(f"🔔 API DEBUG: {count} não lidas de {total} total para usuário {user_id}")
+    
+    return jsonify({
+        'count': count,
+        'total': total,
+        'user_id': user_id,
+        'user_type': user_type
+    })
 
 @helpdesk_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -333,6 +360,20 @@ def criar_chamado():
         # Criar notificações para técnicos e administradores
         try:
             criar_notificacao_novo_chamado(novo_chamado)
+            
+            # Emitir notificação WebSocket em tempo real
+            from flask import current_app
+            if hasattr(current_app, 'emit_new_ticket_notification'):
+                ticket_data = {
+                    'id': novo_chamado.id,
+                    'titulo': novo_chamado.titulo,
+                    'prioridade': novo_chamado.prioridade,
+                    'usuario': novo_chamado.usuario.nome,
+                    'created_at': novo_chamado.data_criacao.isoformat(),
+                    'status': novo_chamado.status
+                }
+                current_app.emit_new_ticket_notification(ticket_data)
+                
         except Exception as e:
             print(f"Erro ao criar notificação: {e}")  # Log do erro, mas não bloqueia o chamado
         
@@ -984,6 +1025,12 @@ def export_relatorio_tecnicos(formato):
     else:
         flash('Formato de exportação inválido!', 'error')
         return redirect(url_for('helpdesk.relatorio_tecnicos'))
+
+@helpdesk_bp.route('/test-notifications')
+@login_required
+def test_notifications():
+    """Página de teste para o sistema de notificações"""
+    return render_template('test_notifications.html')
 
 @helpdesk_bp.route('/chamado/<int:chamado_id>/excluir', methods=['POST'])
 @login_required

@@ -17,7 +17,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/helpdesk.css') }}">
 </head>
-<body>
+<body data-user-type="{{ session.user_type }}">
     <!-- User Sidebar -->
     {% if session.user_id %}
     <div class="admin-sidebar" id="adminSidebar">
@@ -298,84 +298,8 @@
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
     
-    <!-- Notification System -->
-    {% if session.user_type in ['administrador', 'tecnico'] %}
-    <script>
-    let lastNotificationCount = 0;
-    
-    // Função para tocar som de notificação
-    function playNotificationSound() {
-        try {
-            // Criar um beep simples usando Web Audio API
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = 800;
-            oscillator.type = 'sine';
-            
-            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.5);
-        } catch (e) {
-            console.log('Não foi possível tocar o som de notificação');
-        }
-    }
-    
-    function updateNotificationBadge() {
-        fetch('{{ url_for("helpdesk.contar_notificacoes_nao_lidas") }}')
-            .then(response => response.json())
-            .then(data => {
-                const badge = document.getElementById('notification-badge');
-                if (badge) {
-                    const currentCount = data.count;
-                    
-                    if (currentCount > 0) {
-                        badge.textContent = currentCount;
-                        badge.style.display = 'inline';
-                        
-                        // Tocar som apenas se houver novas notificações
-                        if (currentCount > lastNotificationCount && lastNotificationCount >= 0) {
-                            playNotificationSound();
-                            
-                            // Mostrar notificação do navegador se permitido
-                            if (Notification.permission === 'granted') {
-                                new Notification('Nova notificação!', {
-                                    body: `Você tem ${currentCount} notificação${currentCount > 1 ? 'ões' : ''} não lida${currentCount > 1 ? 's' : ''}`,
-                                    icon: '/static/favicon.ico'
-                                });
-                            }
-                        }
-                    } else {
-                        badge.style.display = 'none';
-                    }
-                    
-                    lastNotificationCount = currentCount;
-                }
-            })
-            .catch(error => console.error('Erro ao buscar notificações:', error));
-    }
-    
-    // Pedir permissão para notificações do navegador
-    document.addEventListener('DOMContentLoaded', function() {
-        if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-            Notification.requestPermission();
-        }
-        
-        // Atualizar o badge no carregamento da página
-        updateNotificationBadge();
-    });
-    
-    // Atualizar a cada 10 segundos para ser mais responsivo
-    setInterval(updateNotificationBadge, 10000);
-    </script>
-    {% endif %}
+    <!-- Sistema de Notificações Simples e Confiável -->
+    <script src="{{ url_for('static', filename='js/simple-notifications.js') }}"></script>
     
     {% block extra_js %}{% endblock %}
 </body>

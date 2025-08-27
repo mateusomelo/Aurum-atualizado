@@ -5,6 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory
 from flask_cors import CORS
+from flask_socketio import SocketIO, emit
 from src.models.user import db, User, bcrypt
 from src.models.client import Client
 from src.models.service_type import ServiceType
@@ -28,6 +29,9 @@ app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 
 # Habilita CORS para todas as rotas
 CORS(app, supports_credentials=True)
+
+# Inicializa SocketIO para notificações em tempo real
+socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
 
 # Inicializa o bcrypt
 bcrypt.init_app(app)
@@ -252,9 +256,35 @@ def serve(path):
         else:
             return "index.html not found", 404
 
+# WebSocket Events para Notificações em Tempo Real
+@socketio.on('connect')
+def handle_connect():
+    print('Cliente conectado ao WebSocket')
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('Cliente desconectado do WebSocket')
+
+@socketio.on('join_notifications')
+def handle_join_notifications(data):
+    """Cliente se registra para receber notificações baseado no tipo de usuário"""
+    user_type = data.get('user_type')
+    if user_type in ['administrador', 'tecnico']:
+        print(f'Usuário {user_type} registrado para notificações')
+
+def emit_new_ticket_notification(ticket_data):
+    """Emite notificação para todos os administradores e técnicos conectados"""
+    socketio.emit('new_ticket', {
+        'message': 'Novo chamado aberto!',
+        'ticket': ticket_data,
+        'timestamp': ticket_data.get('created_at')
+    }, broadcast=True)
+
+# Tornar a função disponível globalmente
+app.emit_new_ticket_notification = emit_new_ticket_notification
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8180, debug=True)
+    socketio.run(app, host='0.0.0.0', port=8180, debug=True)
 
 
 

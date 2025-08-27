@@ -7,6 +7,42 @@ from flask_cors import cross_origin
 from datetime import datetime
 from src.models.ticket_response import TicketResponse # Movido para o topo
 
+# Importar função de notificação do helpdesk
+try:
+    from src.routes.helpdesk import criar_notificacao_novo_chamado
+    from src.models.helpdesk_models import Chamado as HelpdeskChamado, Usuario as HelpdeskUsuario
+except ImportError:
+    criar_notificacao_novo_chamado = None
+    HelpdeskChamado = None
+    HelpdeskUsuario = None
+
+def create_helpdesk_notification(ticket):
+    """Cria uma notificação no sistema helpdesk quando um ticket é criado via API"""
+    if not (criar_notificacao_novo_chamado and HelpdeskChamado and HelpdeskUsuario):
+        return
+    
+    try:
+        # Buscar o usuário no sistema helpdesk
+        user = User.query.get(ticket.user_id)
+        if not user:
+            return
+            
+        # Criar um objeto chamado temporário para a notificação
+        fake_chamado = type('obj', (object,), {
+            'id': ticket.id,
+            'titulo': ticket.title,
+            'prioridade': ticket.priority,
+            'usuario': type('obj', (object,), {
+                'nome': user.username or user.email
+            })()
+        })()
+        
+        # Criar as notificações
+        criar_notificacao_novo_chamado(fake_chamado)
+        
+    except Exception as e:
+        print(f"Erro ao criar notificação helpdesk: {e}")
+
 tickets_bp = Blueprint("tickets", __name__)
 
 def require_auth():
@@ -73,6 +109,27 @@ def create_ticket():
         
         db.session.add(ticket)
         db.session.commit()
+        
+        # Criar notificações para administradores e técnicos
+        try:
+            create_helpdesk_notification(ticket)
+            
+            # Emitir notificação WebSocket em tempo real
+            from flask import current_app
+            if hasattr(current_app, 'emit_new_ticket_notification'):
+                user = User.query.get(ticket.user_id)
+                ticket_data = {
+                    'id': ticket.id,
+                    'titulo': ticket.title,
+                    'prioridade': ticket.priority,
+                    'usuario': user.username if user else 'Usuário Desconhecido',
+                    'created_at': ticket.created_at.isoformat(),
+                    'status': ticket.status
+                }
+                current_app.emit_new_ticket_notification(ticket_data)
+                
+        except Exception as e:
+            print(f"Erro ao criar notificação: {e}")  # Log do erro, mas não bloqueia o chamado
         
         return jsonify({
             'message': 'Chamado criado com sucesso',
