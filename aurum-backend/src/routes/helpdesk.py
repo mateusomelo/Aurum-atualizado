@@ -716,28 +716,33 @@ def editar_usuario(usuario_id):
 def desativar_usuario(usuario_id):
     usuario = Usuario.query.get_or_404(usuario_id)
     
-    # Técnicos só podem desativar clientes
+    # Técnicos só podem excluir clientes
     if session['user_type'] == 'tecnico' and usuario.tipo_usuario != 'cliente':
-        flash('Técnicos só podem desativar usuários do tipo cliente!', 'error')
+        flash('Técnicos só podem excluir usuários do tipo cliente!', 'error')
         return redirect(url_for('helpdesk.listar_usuarios'))
     
-    # Capturar dados para log antes da alteração
-    old_values = {'ativo': usuario.ativo}
+    # Não permite excluir o próprio usuário
+    if usuario.id == session['user_id']:
+        flash('Não é possível excluir seu próprio usuário!', 'error')
+        return redirect(url_for('helpdesk.listar_usuarios'))
     
-    usuario.ativo = False
+    # Capturar dados para log antes da exclusão
+    nome_usuario = usuario.nome
+    email_usuario = usuario.email
+    
+    # Exclusão permanente do banco de dados
+    db.session.delete(usuario)
     db.session.commit()
     
-    # Log da desativação do usuário
-    activity_logger.log_update(
+    # Log da exclusão do usuário
+    activity_logger.log_delete(
         module="usuarios",
         entity_type="Usuario", 
-        entity_id=usuario.id,
-        description=f"Desativou usuário '{usuario.nome}' ({usuario.email})",
-        old_values=old_values,
-        new_values={'ativo': False}
+        entity_id=usuario_id,
+        description=f"Excluiu usuário '{nome_usuario}' ({email_usuario})"
     )
     
-    flash('Usuário desativado com sucesso!', 'success')
+    flash('Usuário excluído com sucesso!', 'success')
     return redirect(url_for('helpdesk.listar_usuarios'))
 
 # Rotas para gerenciar empresas
