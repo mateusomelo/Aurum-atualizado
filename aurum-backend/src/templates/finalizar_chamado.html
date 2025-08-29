@@ -89,7 +89,7 @@
                         <strong>{{ resposta.usuario.nome }}</strong>
                         <small class="text-muted">{{ resposta.data_resposta.strftime('%d/%m/%Y %H:%M') }}</small>
                     </div>
-                    <p class="mb-0">{{ resposta.resposta }}</p>
+                    <p class="mb-0" style="white-space: pre-wrap;">{{ resposta.resposta }}</p>
                 </div>
                 {% endfor %}
             </div>

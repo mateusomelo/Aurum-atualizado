@@ -29,7 +29,7 @@
                         <div class="card border-start border-3 {{ 'border-danger' if chamado.status == 'aberto' else 'border-warning' if chamado.status == 'em_andamento' else 'border-success' }}">
                             <div class="card-body">
                                 <h6 class="card-title">{{ chamado.titulo }}</h6>
-                                <p class="card-text small">{{ chamado.descricao[:100] }}{% if chamado.descricao|length > 100 %}...{% endif %}</p>
+                                <p class="card-text small" style="white-space: pre-wrap;">{{ chamado.descricao[:100] }}{% if chamado.descricao|length > 100 %}...{% endif %}</p>
                                 
                                 <div class="mb-2">
                                     <small class="text-muted">

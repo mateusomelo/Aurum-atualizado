@@ -15,7 +15,8 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-8">
-                        <p><strong>Descrição:</strong> {{ chamado.descricao }}</p>
+                        <p><strong>Descrição:</strong></p>
+                        <p style="white-space: pre-wrap;">{{ chamado.descricao }}</p>
                         <small class="text-muted">
                             <i class="fas fa-user me-1"></i>{{ chamado.usuario.nome }} | 
                             <i class="fas fa-calendar me-1"></i>{{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}
@@ -108,7 +109,7 @@
                         <strong>{{ resposta.usuario.nome }}</strong>
                         <small class="text-muted">{{ resposta.data_resposta.strftime('%d/%m/%Y %H:%M') }}</small>
                     </div>
-                    <p class="mb-0">{{ resposta.resposta }}</p>
+                    <p class="mb-0" style="white-space: pre-wrap;">{{ resposta.resposta }}</p>
                 </div>
                 {% endfor %}
             </div>

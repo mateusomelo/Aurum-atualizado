@@ -37,7 +37,7 @@
                                     {% endif %}
                                 </div>
                                 
-                                <p class="card-text small">{{ chamado.descricao[:100] }}{% if chamado.descricao|length > 100 %}...{% endif %}</p>
+                                <p class="card-text small" style="white-space: pre-wrap;">{{ chamado.descricao[:100] }}{% if chamado.descricao|length > 100 %}...{% endif %}</p>
                                 
                                 <div class="mb-2">
                                     <small class="text-muted">
