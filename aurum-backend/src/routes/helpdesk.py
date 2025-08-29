@@ -920,6 +920,21 @@ def relatorio_empresas():
                         'finalizados': len([c for c in chamados_tecnico_empresa if c.status == 'finalizado'])
                     })
         
+        # Detalhes dos chamados com datas
+        chamados_detalhados = []
+        for chamado in chamados:
+            chamados_detalhados.append({
+                'chamado': chamado,
+                'titulo': chamado.titulo,
+                'status': chamado.status,
+                'prioridade': chamado.prioridade,
+                'data_abertura': chamado.data_criacao,
+                'data_finalizacao': chamado.data_finalizacao,
+                'usuario': chamado.usuario.nome if chamado.usuario else 'N/A',
+                'tecnico': chamado.tecnico.nome if chamado.tecnico else 'N/A',
+                'tempo_resolucao': (chamado.data_finalizacao - chamado.data_criacao).days if chamado.data_finalizacao else None
+            })
+        
         relatorio_empresas.append({
             'empresa': empresa,
             'total_usuarios': len(usuarios_empresa),
@@ -928,7 +943,8 @@ def relatorio_empresas():
             'chamados_andamento': len([c for c in chamados if c.status == 'em_andamento']),
             'chamados_finalizados': len([c for c in chamados if c.status == 'finalizado']),
             'usuarios_stats': usuarios_stats,
-            'tecnicos_atenderam': tecnicos_atenderam
+            'tecnicos_atenderam': tecnicos_atenderam,
+            'chamados_detalhados': chamados_detalhados
         })
     
     return render_template('relatorio_empresas.html', relatorio=relatorio_empresas)
@@ -1063,6 +1079,21 @@ def export_relatorio_empresas(formato):
                         'finalizados': len([c for c in chamados_tecnico_empresa if c.status == 'finalizado'])
                     })
         
+        # Detalhes dos chamados com datas
+        chamados_detalhados = []
+        for chamado in chamados:
+            chamados_detalhados.append({
+                'chamado': chamado,
+                'titulo': chamado.titulo,
+                'status': chamado.status,
+                'prioridade': chamado.prioridade,
+                'data_abertura': chamado.data_criacao,
+                'data_finalizacao': chamado.data_finalizacao,
+                'usuario': chamado.usuario.nome if chamado.usuario else 'N/A',
+                'tecnico': chamado.tecnico.nome if chamado.tecnico else 'N/A',
+                'tempo_resolucao': (chamado.data_finalizacao - chamado.data_criacao).days if chamado.data_finalizacao else None
+            })
+        
         relatorio_empresas.append({
             'empresa': empresa,
             'total_usuarios': len(usuarios_empresa),
@@ -1071,7 +1102,8 @@ def export_relatorio_empresas(formato):
             'chamados_andamento': len([c for c in chamados if c.status == 'em_andamento']),
             'chamados_finalizados': len([c for c in chamados if c.status == 'finalizado']),
             'usuarios_stats': usuarios_stats,
-            'tecnicos_atenderam': tecnicos_atenderam
+            'tecnicos_atenderam': tecnicos_atenderam,
+            'chamados_detalhados': chamados_detalhados
         })
     
     # Exportar
@@ -1161,6 +1193,21 @@ def export_relatorio_tecnicos(formato):
                 elif chamado.status == 'finalizado':
                     tecnicos_que_atenderam[tecnico_nome]['finalizados'] += 1
         
+        # Detalhes dos chamados com datas
+        chamados_detalhados = []
+        for chamado in chamados_tecnico:
+            chamados_detalhados.append({
+                'chamado': chamado,
+                'titulo': chamado.titulo,
+                'status': chamado.status,
+                'prioridade': chamado.prioridade,
+                'data_abertura': chamado.data_criacao,
+                'data_finalizacao': chamado.data_finalizacao,
+                'usuario': chamado.usuario.nome if chamado.usuario else 'N/A',
+                'tecnico_responsavel': chamado.tecnico.nome if chamado.tecnico else 'N/A',
+                'tempo_resolucao': (chamado.data_finalizacao - chamado.data_criacao).days if chamado.data_finalizacao else None
+            })
+        
         relatorio_tecnicos.append({
             'tecnico': tecnico,
             'total_chamados': len(chamados_tecnico),
@@ -1168,7 +1215,8 @@ def export_relatorio_tecnicos(formato):
             'chamados_andamento': len([c for c in chamados_tecnico if c.status == 'em_andamento']),
             'chamados_finalizados': len([c for c in chamados_tecnico if c.status == 'finalizado']),
             'tecnicos_que_atenderam': tecnicos_que_atenderam,
-            'chamados_recentes': sorted(chamados_tecnico, key=lambda x: x.data_criacao, reverse=True)[:5]
+            'chamados_recentes': sorted(chamados_tecnico, key=lambda x: x.data_criacao, reverse=True)[:5],
+            'chamados_detalhados': chamados_detalhados
         })
     
     # Exportar
