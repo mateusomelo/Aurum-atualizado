@@ -52,40 +52,13 @@
 
 <!-- Gráfico -->
 <div class="row mt-4">
-    <div class="col-md-6">
+    <div class="col-md-12">
         <div class="card">
             <div class="card-header">
                 <h5>Status dos Chamados</h5>
             </div>
             <div class="card-body">
                 <canvas id="statusChart" width="430" height="430"></canvas>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5>Ações Rápidas</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('helpdesk.criar_chamado') }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Novo Chamado
-                    </a>
-                    <a href="{{ url_for('helpdesk.criar_usuario') }}" class="btn btn-success">
-                        <i class="fas fa-user-plus me-2"></i>Novo Usuário
-                    </a>
-                    <a href="{{ url_for('helpdesk.criar_empresa') }}" class="btn btn-info">
-                        <i class="fas fa-building me-2"></i>Nova Empresa
-                    </a>
-                    <a href="{{ url_for('helpdesk.criar_servico') }}" class="btn btn-warning">
-                        <i class="fas fa-cogs me-2"></i>Novo Serviço
-                    </a>
-                    <a href="{{ url_for('helpdesk.relatorios') }}" class="btn btn-secondary">
-                        <i class="fas fa-chart-bar me-2"></i>Relatórios
-                    </a>
-                </div>
             </div>
         </div>
     </div>
