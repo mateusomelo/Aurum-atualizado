@@ -14,6 +14,27 @@
     </div>
 </div>
 
+<!-- Estatísticas -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card bg-primary">
+            <div class="card-body text-center">
+                <h3>{{ empresas|length }}</h3>
+                <p class="mb-0">Total de Empresas</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card bg-success">
+            <div class="card-body text-center">
+                <h3>{{ empresas|selectattr('ativa', 'equalto', true)|list|length }}</h3>
+                <p class="mb-0">Empresas Ativas</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Filtros -->
 <div class="row mt-3">
     <div class="col-md-8">
@@ -90,35 +111,6 @@
     </div>
 </div>
 
-<!-- Estatísticas -->
-{% if empresas %}
-<div class="row mt-4">
-    <div class="col-md-3">
-        <div class="card bg-primary">
-            <div class="card-body text-center">
-                <h4>{{ empresas|length }}</h4>
-                <p class="mb-0">Total de Empresas</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-success">
-            <div class="card-body text-center">
-                <h4>0</h4>
-                <p class="mb-0">Chamados de Empresas</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-info">
-            <div class="card-body text-center">
-                <h4>0</h4>
-                <p class="mb-0">Média de Chamados</p>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}

@@ -78,43 +78,6 @@
     </div>
 </div>
 
-<!-- Estatísticas -->
-{% if servicos %}
-<div class="row mt-4">
-    <div class="col-md-3">
-        <div class="card bg-primary">
-            <div class="card-body text-center">
-                <h4>{{ servicos|length }}</h4>
-                <p class="mb-0">Total de Serviços</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-success">
-            <div class="card-body text-center">
-                <h4>0</h4>
-                <p class="mb-0">Chamados de Serviços</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-info">
-            <div class="card-body text-center">
-                <h4>0</h4>
-                <p class="mb-0">Serviços com Chamados</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-warning">
-            <div class="card-body text-center">
-                <h4>0</h4>
-                <p class="mb-0">Média de Chamados</p>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}

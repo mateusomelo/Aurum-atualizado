@@ -14,6 +14,65 @@
     </div>
 </div>
 
+<!-- Estatísticas -->
+<div class="row mt-4">
+    {% if session.user_type == 'administrador' %}
+    <div class="col-md-3">
+        <div class="card bg-primary">
+            <div class="card-body text-center">
+                <h3>{{ usuarios|length }}</h3>
+                <p class="mb-0">Total de Usuários</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success">
+            <div class="card-body text-center">
+                <h3>{{ usuarios|selectattr('tipo_usuario', 'equalto', 'cliente')|list|length }}</h3>
+                <p class="mb-0">Clientes</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-info">
+            <div class="card-body text-center">
+                <h3>{{ usuarios|selectattr('tipo_usuario', 'equalto', 'tecnico')|list|length }}</h3>
+                <p class="mb-0">Técnicos</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning">
+            <div class="card-body text-center">
+                <h3>{{ usuarios|selectattr('tipo_usuario', 'equalto', 'administrador')|list|length }}</h3>
+                <p class="mb-0">Administradores</p>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-md-6">
+        <div class="card bg-primary">
+            <div class="card-body text-center">
+                <h3>{{ usuarios|length }}</h3>
+                <p class="mb-0">Total de Usuários</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card bg-success">
+            <div class="card-body text-center">
+                <h3>{{ usuarios|selectattr('tipo_usuario', 'equalto', 'cliente')|list|length }}</h3>
+                <p class="mb-0">Clientes</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
 <!-- Filtros -->
 <div class="row mt-3">
     <div class="col-md-6">
@@ -111,45 +170,6 @@
     </div>
 </div>
 
-<!-- Estatísticas -->
-{% if usuarios %}
-<div class="row mt-4">
-    <div class="col-md-3">
-        <div class="card bg-info">
-            <div class="card-body text-center">
-                <h4>{{ usuarios|selectattr('tipo_usuario', 'equalto', 'cliente')|list|length }}</h4>
-                <p class="mb-0">Clientes</p>
-            </div>
-        </div>
-    </div>
-    {% if session.user_type == 'administrador' %}
-    <div class="col-md-3">
-        <div class="card bg-warning">
-            <div class="card-body text-center">
-                <h4>{{ usuarios|selectattr('tipo_usuario', 'equalto', 'tecnico')|list|length }}</h4>
-                <p class="mb-0">Técnicos</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-danger">
-            <div class="card-body text-center">
-                <h4>{{ usuarios|selectattr('tipo_usuario', 'equalto', 'administrador')|list|length }}</h4>
-                <p class="mb-0">Administradores</p>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-    <div class="col-md-3">
-        <div class="card bg-success">
-            <div class="card-body text-center">
-                <h4>{{ usuarios|length }}</h4>
-                <p class="mb-0">Total</p>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}
