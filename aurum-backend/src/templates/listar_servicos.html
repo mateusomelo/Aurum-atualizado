@@ -51,9 +51,9 @@
                                         <a href="{{ url_for('helpdesk.editar_servico', servico_id=servico.id) }}" class="btn btn-outline-warning btn-sm" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form method="POST" action="{{ url_for('helpdesk.desativar_servico', servico_id=servico.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja desativar este serviço?')">
-                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Desativar">
-                                                <i class="fas fa-ban"></i>
+                                        <form method="POST" action="{{ url_for('helpdesk.desativar_servico', servico_id=servico.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir este serviço PERMANENTEMENTE? Esta ação não pode ser desfeita!')">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir Permanentemente">
+                                                <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
                                     </div>

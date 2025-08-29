@@ -234,7 +234,7 @@ def listar_empresas():
 
 @helpdesk_bp.route('/servicos')
 @login_required
-@admin_required
+@admin_or_tecnico_required
 def listar_servicos():
     servicos = Servico.query.filter_by(ativo=True).order_by(Servico.data_criacao.desc()).all()
     return render_template('listar_servicos.html', servicos=servicos)
@@ -342,7 +342,7 @@ def criar_empresa():
 
 @helpdesk_bp.route('/criar_servico', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@admin_or_tecnico_required
 def criar_servico():
     if request.method == 'POST':
         nome = request.form['nome']
@@ -356,7 +356,7 @@ def criar_servico():
         db.session.commit()
         
         flash('Serviço criado com sucesso!', 'success')
-        return redirect(url_for('helpdesk.criar_servico'))
+        return redirect(url_for('helpdesk.listar_servicos'))
     
     return render_template('criar_servico.html')
 
@@ -820,14 +820,14 @@ def desativar_empresa(empresa_id):
 # Rotas para gerenciar serviços
 @helpdesk_bp.route('/servico/<int:servico_id>')
 @login_required
-@admin_required
+@admin_or_tecnico_required
 def ver_servico(servico_id):
     servico = Servico.query.get_or_404(servico_id)
     return render_template('ver_servico.html', servico=servico)
 
 @helpdesk_bp.route('/servico/<int:servico_id>/editar', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@admin_or_tecnico_required
 def editar_servico(servico_id):
     servico = Servico.query.get_or_404(servico_id)
     
@@ -843,12 +843,19 @@ def editar_servico(servico_id):
 
 @helpdesk_bp.route('/servico/<int:servico_id>/desativar', methods=['POST'])
 @login_required
-@admin_required
+@admin_or_tecnico_required
 def desativar_servico(servico_id):
     servico = Servico.query.get_or_404(servico_id)
-    servico.ativo = False
+    
+    # Verificar se o serviço tem chamados associados
+    if servico.chamados:
+        flash('Não é possível excluir este serviço pois ele possui chamados associados!', 'error')
+        return redirect(url_for('helpdesk.listar_servicos'))
+    
+    # Excluir permanentemente do banco de dados
+    db.session.delete(servico)
     db.session.commit()
-    flash('Serviço desativado com sucesso!', 'success')
+    flash('Serviço excluído permanentemente com sucesso!', 'success')
     return redirect(url_for('helpdesk.listar_servicos'))
 
 @helpdesk_bp.route('/relatorios')

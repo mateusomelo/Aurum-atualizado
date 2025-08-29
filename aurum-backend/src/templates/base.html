@@ -199,6 +199,23 @@
                 </a>
             </li>
             
+            <!-- Serviços -->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="{{ url_for('helpdesk.listar_servicos') }}" role="button" data-bs-toggle="collapse" data-bs-target="#servicosTecnicoMenu" aria-expanded="false">
+                    <i class="fas fa-cogs"></i>Serviços
+                </a>
+                <div class="collapse" id="servicosTecnicoMenu">
+                    <ul class="admin-sidebar-submenu">
+                        <li><a class="nav-link" href="{{ url_for('helpdesk.listar_servicos') }}">
+                            <i class="fas fa-list"></i>Listar Serviços
+                        </a></li>
+                        <li><a class="nav-link" href="{{ url_for('helpdesk.criar_servico') }}">
+                            <i class="fas fa-plus"></i>Criar Serviço
+                        </a></li>
+                    </ul>
+                </div>
+            </li>
+            
             <!-- Chamados -->
             <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('helpdesk.listar_chamados') }}">
