@@ -37,6 +37,9 @@
                             <div class="col-md-6">
                                 <strong>Cliente:</strong> {{ chamado.usuario.nome }}<br>
                                 <strong>Data de Criação:</strong> {{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}<br>
+                                {% if chamado.data_finalizacao %}
+                                <strong>Data de Finalização:</strong> {{ chamado.data_finalizacao.strftime('%d/%m/%Y %H:%M') }}<br>
+                                {% endif %}
                                 {% if chamado.tecnico %}
                                 <strong>Técnico:</strong> {{ chamado.tecnico.nome }}
                                 {% endif %}

@@ -191,7 +191,7 @@
                                     {{ chamado.titulo }}
                                 </a>
                             </h6>
-                            <small>{{ chamado.data_criacao.strftime('%d/%m/%Y') }}</small>
+                            <small>{{ chamado.data_criacao.strftime('%d/%m/%Y') }}{% if chamado.data_finalizacao %} - <strong>Finalizado:</strong> {{ chamado.data_finalizacao.strftime('%d/%m/%Y') }}{% endif %}</small>
                         </div>
                         <p class="mb-1 small" style="white-space: pre-wrap;">{{ chamado.descricao[:80] }}{% if chamado.descricao|length > 80 %}...{% endif %}</p>
                         <div class="d-flex justify-content-between align-items-center">

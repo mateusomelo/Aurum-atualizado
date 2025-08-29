@@ -119,6 +119,9 @@
                                         {% if chamado.tecnico %}
                                         <br><i class="fas fa-user-cog me-1"></i>{{ chamado.tecnico.nome }}
                                         {% endif %}
+                                        {% if chamado.data_finalizacao %}
+                                        <br><i class="fas fa-check-circle me-1"></i><strong>Finalizado:</strong> {{ chamado.data_finalizacao.strftime('%d/%m/%Y %H:%M') }}
+                                        {% endif %}
                                     </small>
                                 </div>
                                 

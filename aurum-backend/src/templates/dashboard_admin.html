@@ -88,6 +88,9 @@
                                         <i class="fas fa-building me-1"></i>{{ chamado.usuario.empresa.nome_empresa }}<br>
                                         {% endif %}
                                         <i class="fas fa-calendar me-1"></i>{{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}
+                                        {% if chamado.data_finalizacao %}
+                                        <br><i class="fas fa-check-circle me-1"></i><strong>Finalizado:</strong> {{ chamado.data_finalizacao.strftime('%d/%m/%Y %H:%M') }}
+                                        {% endif %}
                                         {% if chamado.servico %}
                                         <br><i class="fas fa-cogs me-1"></i>{{ chamado.servico.nome }}
                                         {% endif %}
