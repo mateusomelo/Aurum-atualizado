@@ -14,6 +14,45 @@
     </div>
 </div>
 
+<!-- Estatísticas -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-primary">
+            <div class="card-body text-center">
+                <h3>{{ chamados|length }}</h3>
+                <p class="mb-0">Total de Chamados</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-danger">
+            <div class="card-body text-center">
+                <h3>{{ chamados|selectattr('status', 'equalto', 'aberto')|list|length }}</h3>
+                <p class="mb-0">Chamados Abertos</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning">
+            <div class="card-body text-center">
+                <h3>{{ chamados|selectattr('status', 'equalto', 'em_andamento')|list|length }}</h3>
+                <p class="mb-0">Em Andamento</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success">
+            <div class="card-body text-center">
+                <h3>{{ chamados|selectattr('status', 'equalto', 'finalizado')|list|length }}</h3>
+                <p class="mb-0">Finalizados</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Filtros -->
 <div class="row mt-3">
     <div class="col-md-4">
@@ -176,43 +215,6 @@
     </div>
 </div>
 
-<!-- Estatísticas -->
-{% if chamados %}
-<div class="row mt-4">
-    <div class="col-md-3">
-        <div class="card bg-danger">
-            <div class="card-body text-center">
-                <h4>{{ chamados|selectattr('status', 'equalto', 'aberto')|list|length }}</h4>
-                <p class="mb-0">Abertos</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-warning">
-            <div class="card-body text-center">
-                <h4>{{ chamados|selectattr('status', 'equalto', 'em_andamento')|list|length }}</h4>
-                <p class="mb-0">Em Andamento</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-success">
-            <div class="card-body text-center">
-                <h4>{{ chamados|selectattr('status', 'equalto', 'finalizado')|list|length }}</h4>
-                <p class="mb-0">Finalizados</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-primary">
-            <div class="card-body text-center">
-                <h4>{{ chamados|length }}</h4>
-                <p class="mb-0">Total</p>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}
