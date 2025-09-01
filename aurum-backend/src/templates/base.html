@@ -173,6 +173,20 @@
                 </a>
             </li>
             
+            <!-- Configurações (apenas para administradores) -->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="collapse" data-bs-target="#configMenu" aria-expanded="false">
+                    <i class="fas fa-cogs"></i>Configurações
+                </a>
+                <div class="collapse" id="configMenu">
+                    <ul class="admin-sidebar-submenu">
+                        <li><a class="nav-link" href="{{ url_for('helpdesk.configurar_email') }}">
+                            <i class="fas fa-envelope-open-text"></i>Configuração de Email
+                        </a></li>
+                    </ul>
+                </div>
+            </li>
+            
             {% elif session.user_type == 'tecnico' %}
             <!-- Menu do Técnico -->
             <!-- Clientes -->

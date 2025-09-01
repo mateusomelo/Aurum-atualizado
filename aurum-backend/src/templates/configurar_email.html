@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Configurações de Email{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h2>
+            <i class="fas fa-envelope-open-text me-2"></i>Configurações de Email
+        </h2>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-cog me-2"></i>Configurações do Servidor SMTP</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="mail_server" class="form-label">Servidor SMTP *</label>
+                                <input type="text" class="form-control" id="mail_server" name="mail_server" 
+                                       value="{{ config.mail_server if config else 'smtp.gmail.com' }}" 
+                                       placeholder="smtp.gmail.com" required>
+                                <div class="form-text">Ex: smtp.gmail.com, smtp.outlook.com</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="mail_port" class="form-label">Porta *</label>
+                                <input type="number" class="form-control" id="mail_port" name="mail_port" 
+                                       value="{{ config.mail_port if config else '587' }}" 
+                                       placeholder="587" required>
+                                <div class="form-text">Geralmente 587 ou 465</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="mail_use_tls" name="mail_use_tls" 
+                                   {{ 'checked' if not config or config.mail_use_tls }}>
+                            <label class="form-check-label" for="mail_use_tls">
+                                Usar TLS/STARTTLS
+                            </label>
+                            <div class="form-text">Recomendado para maior segurança</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="mail_username" class="form-label">Email do Remetente *</label>
+                        <input type="email" class="form-control" id="mail_username" name="mail_username" 
+                               value="{{ config.mail_username if config else '' }}" 
+                               placeholder="sistema@suaempresa.com" required>
+                        <div class="form-text">Email que será usado para enviar as notificações</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="mail_password" class="form-label">Senha *</label>
+                        <input type="password" class="form-control" id="mail_password" name="mail_password" 
+                               value="{{ config.mail_password if config else '' }}" 
+                               placeholder="Digite a senha ou senha de app" required>
+                        <div class="form-text">
+                            <strong>Para Gmail:</strong> Use uma "Senha de App" em vez da senha normal da conta.<br>
+                            <a href="https://support.google.com/accounts/answer/185833" target="_blank">Como criar senha de app no Gmail</a>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="mail_default_sender" class="form-label">Nome do Remetente *</label>
+                        <input type="text" class="form-control" id="mail_default_sender" name="mail_default_sender" 
+                               value="{{ config.mail_default_sender if config else 'Sistema Helpdesk Aurum' }}" 
+                               placeholder="Sistema Helpdesk Aurum" required>
+                        <div class="form-text">Nome que aparecerá como remetente dos emails</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="recipient_email" class="form-label">Email de Contato</label>
+                        <input type="email" class="form-control" id="recipient_email" name="recipient_email" 
+                               value="{{ config.recipient_email if config else '' }}" 
+                               placeholder="contato@suaempresa.com">
+                        <div class="form-text">Email de contato que pode aparecer nas notificações</div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Salvar Configurações
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-test-tube me-2"></i>Teste de Configuração</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Teste se as configurações estão funcionando enviando um email de teste.</p>
+                
+                <form method="POST" action="{{ url_for('helpdesk.testar_email') }}">
+                    <div class="mb-3">
+                        <label for="email_teste" class="form-label">Email de Teste *</label>
+                        <input type="email" class="form-control" id="email_teste" name="email_teste" 
+                               placeholder="seu@email.com" required>
+                        <div class="form-text">Email onde será enviado o teste</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-paper-plane me-2"></i>Enviar Teste
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Informações</h5>
+            </div>
+            <div class="card-body">
+                <h6>Quando são enviados os emails:</h6>
+                <ul class="small">
+                    <li><strong>Cliente abre chamado:</strong> Cliente e equipe técnica recebem notificação</li>
+                    <li><strong>Técnico assume chamado:</strong> Técnico recebe confirmação</li>
+                    <li><strong>Status do chamado muda:</strong> Partes interessadas são notificadas</li>
+                </ul>
+                
+                <hr>
+                
+                <h6>Configurações Populares:</h6>
+                <div class="small">
+                    <strong>Gmail:</strong><br>
+                    Servidor: smtp.gmail.com<br>
+                    Porta: 587<br>
+                    TLS: Ativado<br>
+                    
+                    <br><strong>Outlook/Hotmail:</strong><br>
+                    Servidor: smtp-mail.outlook.com<br>
+                    Porta: 587<br>
+                    TLS: Ativado
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Adicionar validação visual
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input[required]');
+    
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.value.trim() === '') {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
