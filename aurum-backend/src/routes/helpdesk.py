@@ -15,8 +15,8 @@ helpdesk_bp = Blueprint('helpdesk', __name__)
 
 def criar_notificacao_novo_chamado(chamado):
     """Cria notificações para técnicos e administradores quando um novo chamado é aberto"""
-    print(f"🔔 DEBUG: Criando notificações para chamado ID: {chamado.id}")
-    print(f"🔔 DEBUG: Título do chamado: {chamado.titulo}")
+    print(f"[DEBUG]: Criando notificações para chamado ID: {chamado.id}")
+    print(f"[DEBUG]: Título do chamado: {chamado.titulo}")
     
     # Buscar todos os técnicos e administradores ativos
     usuarios_para_notificar = Usuario.query.filter(
@@ -24,10 +24,10 @@ def criar_notificacao_novo_chamado(chamado):
         Usuario.tipo_usuario.in_(['tecnico', 'administrador'])
     ).all()
     
-    print(f"🔔 DEBUG: Encontrados {len(usuarios_para_notificar)} usuários para notificar")
+    print(f"[DEBUG]: DEBUG: Encontrados {len(usuarios_para_notificar)} usuários para notificar")
     
     for usuario in usuarios_para_notificar:
-        print(f"🔔 DEBUG: Criando notificação para usuário: {usuario.nome} ({usuario.tipo_usuario})")
+        print(f"[DEBUG]: DEBUG: Criando notificação para usuário: {usuario.nome} ({usuario.tipo_usuario})")
         try:
             notificacao = Notificacao(
                 titulo=f"Novo chamado: {chamado.titulo}",
@@ -37,20 +37,20 @@ def criar_notificacao_novo_chamado(chamado):
                 chamado_id=chamado.id
             )
             db.session.add(notificacao)
-            print(f"🔔 DEBUG: Notificação criada para {usuario.nome}")
+            print(f"[DEBUG]: DEBUG: Notificação criada para {usuario.nome}")
         except Exception as e:
-            print(f"🔔 ERROR: Erro ao criar notificação para {usuario.nome}: {e}")
+            print(f"[DEBUG]: ERROR: Erro ao criar notificação para {usuario.nome}: {e}")
     
     try:
         db.session.commit()
-        print(f"🔔 DEBUG: Notificações salvas no banco com sucesso!")
+        print(f"[DEBUG]: DEBUG: Notificações salvas no banco com sucesso!")
         
         # Verificar se foram salvas
         total_notificacoes = Notificacao.query.count()
-        print(f"🔔 DEBUG: Total de notificações no banco: {total_notificacoes}")
+        print(f"[DEBUG]: DEBUG: Total de notificações no banco: {total_notificacoes}")
         
     except Exception as e:
-        print(f"🔔 ERROR: Erro ao salvar notificações no banco: {e}")
+        print(f"[DEBUG]: ERROR: Erro ao salvar notificações no banco: {e}")
         db.session.rollback()
 
 @helpdesk_bp.route('/notificacoes')
@@ -79,12 +79,12 @@ def contar_notificacoes_nao_lidas():
     user_id = session['user_id']
     user_type = session.get('user_type', 'unknown')
     
-    print(f"🔔 API DEBUG: Usuário {user_id} ({user_type}) consultando notificações")
+    print(f"[DEBUG]: API DEBUG: Usuário {user_id} ({user_type}) consultando notificações")
     
     count = Notificacao.query.filter_by(usuario_id=user_id, lida=False).count()
     total = Notificacao.query.filter_by(usuario_id=user_id).count()
     
-    print(f"🔔 API DEBUG: {count} não lidas de {total} total para usuário {user_id}")
+    print(f"[DEBUG]: API DEBUG: {count} não lidas de {total} total para usuário {user_id}")
     
     return jsonify({
         'count': count,
@@ -103,7 +103,7 @@ def login():
         
         if user and user.check_password(password):
             # Debug antes de setar a sessão
-            debug_print(f"🔐 Login bem-sucedido para: {user.nome} ({user.email})")
+            debug_print(f"[LOGIN]: Login bem-sucedido para: {user.nome} ({user.email})")
             
             session['user_id'] = user.id
             session['user_name'] = user.nome
@@ -111,11 +111,11 @@ def login():
             session['user_email'] = user.email
             
             # Debug após setar a sessão
-            debug_print(f"📝 Sessão configurada - user_id: {session.get('user_id')}")
+            debug_print(f"[SESSION]: Sessão configurada - user_id: {session.get('user_id')}")
             debug_session_info()
             
             # Log de login bem-sucedido
-            debug_print("🎯 Tentando registrar log de login...")
+            debug_print("[LOG]: Tentando registrar log de login...")
             activity_logger.log_login(
                 user_id=user.id,
                 user_name=user.nome,

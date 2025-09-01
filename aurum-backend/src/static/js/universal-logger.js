@@ -56,7 +56,7 @@ class UniversalLogger {
         // Log específico para elementos importantes
         this.setupSpecialElements();
         
-        console.log('✅ Event listeners configurados para captura universal');
+        console.log('[OK] Event listeners configurados para captura universal');
     }
     
     handleClick(event) {
@@ -304,7 +304,7 @@ class UniversalLogger {
             })
         }).then(response => {
             if (response.ok) {
-                console.log(`✅ Enviados ${logs.length} logs para o servidor`);
+                console.log(`[OK] Enviados ${logs.length} logs para o servidor`);
             } else {
                 console.error('❌ Erro ao enviar logs:', response.status);
                 // Devolver à fila em caso de erro
@@ -325,7 +325,7 @@ class UniversalLogger {
     
     enable() {
         this.isEnabled = true;
-        console.log('✅ Universal Logger ATIVADO');
+        console.log('[OK] Universal Logger ATIVADO');
     }
     
     disable() {

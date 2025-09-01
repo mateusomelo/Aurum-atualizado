@@ -120,7 +120,7 @@ class ActivityLogger:
             db.session.add(log_entry)
             db.session.commit()
             
-            debug_print(f"✅ Log salvo com sucesso - ID: {log_entry.id}")
+            debug_print(f"[SUCCESS] Log salvo com sucesso - ID: {log_entry.id}")
             return log_entry
             
         except Exception as e:

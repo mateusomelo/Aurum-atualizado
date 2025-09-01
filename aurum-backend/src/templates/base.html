@@ -66,12 +66,9 @@
     {% if session.user_id %}
     <div class="admin-sidebar" id="adminSidebar">
         <div class="admin-sidebar-header">
-            <h4><i class="fas fa-ticket-alt me-2"></i>
-                {% if session.user_type == 'administrador' %}Painel Admin
-                {% elif session.user_type == 'tecnico' %}Painel Técnico
-                {% else %}Painel Cliente
-                {% endif %}
-            </h4>
+            <div class="sidebar-logo">
+                <img src="{{ url_for('static', filename='assets/aurum1.png') }}" alt="Aurum Logo">
+            </div>
         </div>
         
         <ul class="admin-sidebar-nav">
@@ -379,6 +376,12 @@
     
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    
+    <!-- Socket.IO para notificações em tempo real -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.4/socket.io.js"></script>
+    
+    <!-- Sistema de Notificações em Tempo Real -->
+    <script src="{{ url_for('static', filename='js/realtime-notifications.js') }}"></script>
     
     <!-- Sistema de Notificações Simples e Confiável -->
     <script src="{{ url_for('static', filename='js/simple-notifications.js') }}"></script>
