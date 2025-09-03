@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Criar Usuário{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>
+                    <i class="fas fa-user-plus me-2"></i>Criar Novo Usuário
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome Completo *</label>
+                        <input type="text" class="form-control" id="nome" name="nome" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="telefone" class="form-label">Telefone *</label>
+                        <input type="text" class="form-control" id="telefone" name="telefone" 
+                               placeholder="(00) 00000-0000" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="senha" class="form-label">Senha *</label>
+                        <input type="password" class="form-control" id="senha" name="senha" 
+                               minlength="6" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tipo_usuario" class="form-label">Tipo de Usuário *</label>
+                        <select class="form-select" id="tipo_usuario" name="tipo_usuario" required>
+                            {% if session.user_type == 'administrador' %}
+                            <option value="">Selecione...</option>
+                            <option value="administrador">Administrador</option>
+                            <option value="tecnico">Técnico</option>
+                            <option value="cliente">Cliente</option>
+                            {% else %}
+                            <option value="cliente" selected>Cliente</option>
+                            {% endif %}
+                        </select>
+                        {% if session.user_type == 'tecnico' %}
+                        <small class="form-text text-muted">
+                            Como técnico, você só pode criar usuários do tipo Cliente.
+                        </small>
+                        {% endif %}
+                    </div>
+                    
+                    {% if empresas %}
+                    <div class="mb-3">
+                        <label for="empresa_id" class="form-label">Empresa (Opcional)</label>
+                        <select class="form-select" id="empresa_id" name="empresa_id">
+                            <option value="">Selecione uma empresa...</option>
+                            {% for empresa in empresas %}
+                            <option value="{{ empresa.id }}">{{ empresa.nome_empresa }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">
+                            Você pode associar este usuário a uma empresa específica.
+                        </small>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% if session.user_type == 'administrador' %}{{ url_for('helpdesk.dashboard_admin') }}{% else %}{{ url_for('helpdesk.dashboard_tecnico') }}{% endif %}" 
+                           class="btn btn-secondary me-md-2">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i>Criar Usuário
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

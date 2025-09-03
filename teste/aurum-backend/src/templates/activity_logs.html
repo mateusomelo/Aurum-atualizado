@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block title %}Logs de Atividade{% endblock %}
+
+{% block extra_css %}
+<style>
+    .log-filters {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    
+    .log-table {
+        font-size: 0.9em;
+    }
+    
+    .log-table th {
+        background: #343a40;
+        color: white;
+        font-weight: 500;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .log-row:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .action-badge {
+        font-size: 0.8em;
+        font-weight: bold;
+    }
+    
+    .action-CREATE { background: #28a745; }
+    .action-UPDATE { background: #ffc107; color: #000; }
+    .action-DELETE { background: #dc3545; }
+    .action-LOGIN_SUCCESS { background: #17a2b8; }
+    .action-LOGIN_FAILED { background: #fd7e14; }
+    .action-LOGOUT { background: #6c757d; }
+    .action-VIEW { background: #6f42c1; }
+    .action-ERROR { background: #dc3545; }
+    .action-EXPORT { background: #20c997; }
+    
+    .module-badge {
+        font-size: 0.8em;
+        background: #e9ecef;
+        color: #495057;
+        padding: 2px 8px;
+        border-radius: 12px;
+    }
+    
+    .user-info {
+        font-size: 0.85em;
+    }
+    
+    .timestamp {
+        font-size: 0.8em;
+        color: #6c757d;
+    }
+    
+    .description-cell {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .stats-row {
+        margin-bottom: 20px;
+    }
+    
+    .stat-card {
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .stat-card h4 {
+        margin: 0;
+        font-size: 1.8em;
+    }
+    
+    .stat-card p {
+        margin: 5px 0 0 0;
+        font-size: 0.9em;
+        opacity: 0.9;
+    }
+    
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: end;
+    }
+    
+    .filter-group {
+        min-width: 150px;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .table-container {
+        max-height: 600px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+    }
+    
+    @media (max-width: 768px) {
+        .filter-form {
+            flex-direction: column;
+        }
+        .filter-group {
+            min-width: 100%;
+        }
+        .table-container {
+            font-size: 0.8em;
+        }
+        .description-cell {
+            max-width: 150px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="fas fa-history"></i> Logs de Atividade</h2>
+        <div>
+            <a href="{{ url_for('activity_logs.exportar_logs', **current_filters) }}" class="btn btn-success btn-sm">
+                <i class="fas fa-download"></i> Exportar CSV
+            </a>
+            <button class="btn btn-info btn-sm" onclick="location.reload()">
+                <i class="fas fa-sync-alt"></i> Atualizar
+            </button>
+        </div>
+    </div>
+    
+    <!-- Estatísticas Rápidas -->
+    <div class="row stats-row">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h4 id="total-logs">{{ pagination.total }}</h4>
+                <p>Total de Logs</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(45deg, #28a745, #20c997);">
+                <h4 id="logs-24h">-</h4>
+                <p>Últimas 24h</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(45deg, #ffc107, #fd7e14);">
+                <h4 id="logs-week">-</h4>
+                <p>Última Semana</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(45deg, #dc3545, #c82333);">
+                <h4 id="unique-users">-</h4>
+                <p>Usuários Ativos</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="log-filters">
+        <form method="GET" class="filter-form">
+            <div class="filter-group">
+                <label class="form-label">Ação</label>
+                <select name="action" class="form-select form-select-sm">
+                    <option value="">Todas</option>
+                    {% for action in actions %}
+                    <option value="{{ action }}" {% if current_filters.action == action %}selected{% endif %}>
+                        {{ action }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="form-label">Módulo</label>
+                <select name="module" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    {% for module in modules %}
+                    <option value="{{ module }}" {% if current_filters.module == module %}selected{% endif %}>
+                        {{ module }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="form-label">Usuário</label>
+                <input type="text" name="user_id" class="form-control form-control-sm" 
+                       value="{{ current_filters.user_id }}" placeholder="Nome ou ID">
+            </div>
+            
+            <div class="filter-group">
+                <label class="form-label">Data Início</label>
+                <input type="date" name="date_from" class="form-control form-control-sm" 
+                       value="{{ current_filters.date_from }}">
+            </div>
+            
+            <div class="filter-group">
+                <label class="form-label">Data Fim</label>
+                <input type="date" name="date_to" class="form-control form-control-sm" 
+                       value="{{ current_filters.date_to }}">
+            </div>
+            
+            <div class="filter-group">
+                <label class="form-label">Buscar</label>
+                <input type="text" name="search" class="form-control form-control-sm" 
+                       value="{{ current_filters.search }}" placeholder="Buscar...">
+            </div>
+            
+            <div class="filter-group">
+                <label class="form-label">Por Página</label>
+                <select name="per_page" class="form-select form-select-sm">
+                    <option value="25" {% if current_filters.per_page == 25 %}selected{% endif %}>25</option>
+                    <option value="50" {% if current_filters.per_page == 50 %}selected{% endif %}>50</option>
+                    <option value="100" {% if current_filters.per_page == 100 %}selected{% endif %}>100</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <div class="btn-group-sm">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                    <a href="{{ url_for('activity_logs.listar_logs') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-times"></i> Limpar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabela de Logs -->
+    <div class="table-container">
+        <table class="table table-hover table-sm log-table mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">ID</th>
+                    <th style="width: 130px;">Data/Hora</th>
+                    <th style="width: 120px;">Usuário</th>
+                    <th style="width: 80px;">Ação</th>
+                    <th style="width: 80px;">Módulo</th>
+                    <th>Descrição</th>
+                    <th style="width: 100px;">IP</th>
+                    <th style="width: 60px;">Status</th>
+                    <th style="width: 70px;">Resp.(ms)</th>
+                    <th style="width: 60px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if logs %}
+                    {% for log in logs %}
+                    <tr class="log-row">
+                        <td>{{ log.id }}</td>
+                        <td class="timestamp">
+                            {{ log.timestamp.strftime('%d/%m/%Y %H:%M:%S') if log.timestamp else '-' }}
+                        </td>
+                        <td class="user-info">
+                            <div>
+                                <strong>{{ log.user_name or 'Sistema' }}</strong>
+                                {% if log.user_type %}
+                                    <br><small class="text-muted">{{ log.user_type }}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge action-badge action-{{ log.action }}">
+                                {{ log.action }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="module-badge">{{ log.module }}</span>
+                        </td>
+                        <td class="description-cell" title="{{ log.description }}">
+                            {{ log.description }}
+                            {% if log.entity_type and log.entity_id %}
+                                <br><small class="text-muted">{{ log.entity_type }} #{{ log.entity_id }}</small>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted">{{ log.ip_address or '-' }}</td>
+                        <td>
+                            {% if log.status_code %}
+                                <span class="badge {% if log.status_code < 400 %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ log.status_code }}
+                                </span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-muted">
+                            {{ log.response_time|round(2) if log.response_time else '-' }}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('activity_logs.detalhe_log', log_id=log.id) }}" 
+                               class="btn btn-outline-info btn-sm" title="Ver detalhes">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center py-4">
+                            <i class="fas fa-search fa-2x text-muted"></i>
+                            <p class="mt-2 text-muted">Nenhum log encontrado com os filtros aplicados.</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginação -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Paginação dos logs" class="mt-3">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('activity_logs.listar_logs', page=pagination.prev_num, **current_filters) }}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            {% endif %}
+            
+            {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != pagination.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('activity_logs.listar_logs', page=page_num, **current_filters) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('activity_logs.listar_logs', page=pagination.next_num, **current_filters) }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    
+    <div class="text-center text-muted">
+        Mostrando {{ (pagination.page - 1) * pagination.per_page + 1 }} a 
+        {{ pagination.page * pagination.per_page if pagination.page * pagination.per_page <= pagination.total else pagination.total }} 
+        de {{ pagination.total }} logs
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Carregar estatísticas via AJAX
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('{{ url_for("activity_logs.logs_stats") }}')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('logs-24h').textContent = data.logs_24h || 0;
+            document.getElementById('logs-week').textContent = data.logs_week || 0;
+            document.getElementById('unique-users').textContent = data.top_users?.length || 0;
+        })
+        .catch(error => console.error('Erro ao carregar estatísticas:', error));
+});
+
+// Auto-submit do formulário quando selects mudarem
+document.querySelectorAll('select[name="action"], select[name="module"], select[name="per_page"]').forEach(select => {
+    select.addEventListener('change', function() {
+        this.form.submit();
+    });
+});
+</script>
+{% endblock %}

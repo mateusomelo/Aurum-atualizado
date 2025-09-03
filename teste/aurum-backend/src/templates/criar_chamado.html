@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Criar Chamado{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>
+                    <i class="fas fa-plus me-2"></i>Criar Novo Chamado
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="titulo" class="form-label">Título *</label>
+                        <input type="text" class="form-control" id="titulo" name="titulo" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição *</label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="4" 
+                                  required placeholder="Descreva detalhadamente o problema ou solicitação..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="prioridade" class="form-label">Prioridade *</label>
+                        <select class="form-select" id="prioridade" name="prioridade" required>
+                            <option value="">Selecione...</option>
+                            <option value="baixa">Baixa</option>
+                            <option value="media" selected>Média</option>
+                            <option value="alta">Alta</option>
+                        </select>
+                    </div>
+                    
+                    {% if empresas and session.user_type in ['administrador', 'tecnico'] %}
+                    <div class="mb-3">
+                        <label for="empresa_id" class="form-label">Empresa (Opcional)</label>
+                        <select class="form-select" id="empresa_id" name="empresa_id">
+                            <option value="">Selecione...</option>
+                            {% for empresa in empresas %}
+                            <option value="{{ empresa.id }}">{{ empresa.nome_empresa }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    {% if servicos %}
+                    <div class="mb-3">
+                        <label for="servico_id" class="form-label">
+                            Serviço {% if session.user_type == 'cliente' %}*{% else %}(Opcional){% endif %}
+                        </label>
+                        <select class="form-select" id="servico_id" name="servico_id" 
+                                {% if session.user_type == 'cliente' %}required{% endif %}>
+                            <option value="">Selecione...</option>
+                            {% for servico in servicos %}
+                            <option value="{{ servico.id }}">{{ servico.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if session.user_type == 'cliente' %}
+                        <small class="form-text text-muted">Selecione o tipo de serviço para seu chamado.</small>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% if session.user_type == 'administrador' %}{{ url_for('helpdesk.dashboard_admin') }}{% elif session.user_type == 'tecnico' %}{{ url_for('helpdesk.dashboard_tecnico') }}{% else %}{{ url_for('helpdesk.dashboard_cliente') }}{% endif %}" 
+                           class="btn btn-secondary me-md-2">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i>Criar Chamado
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

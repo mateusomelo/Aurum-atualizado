@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Notificações{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>
+            <i class="fas fa-bell me-2"></i>Notificações
+        </h2>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        {% if notificacoes %}
+        <div class="list-group">
+            {% for notificacao in notificacoes %}
+            <div class="list-group-item {% if not notificacao.lida %}list-group-item-info{% endif %} d-flex justify-content-between align-items-start">
+                <div class="ms-2 me-auto">
+                    <div class="fw-bold">
+                        {% if notificacao.tipo == 'novo_chamado' %}
+                        <i class="fas fa-ticket-alt me-2 text-primary"></i>
+                        {% endif %}
+                        {{ notificacao.titulo }}
+                    </div>
+                    <p class="mb-1">{{ notificacao.mensagem }}</p>
+                    <small class="text-muted">{{ notificacao.data_criacao.strftime('%d/%m/%Y %H:%M') }}</small>
+                    {% if notificacao.chamado %}
+                    <div class="mt-2">
+                        <a href="{{ url_for('helpdesk.ver_chamado', chamado_id=notificacao.chamado.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>Ver Chamado
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="d-flex flex-column align-items-end">
+                    {% if not notificacao.lida %}
+                    <span class="badge bg-primary rounded-pill mb-2">Nova</span>
+                    <a href="{{ url_for('helpdesk.marcar_notificacao_lida', notificacao_id=notificacao.id) }}" class="btn btn-sm btn-success">
+                        <i class="fas fa-check me-1"></i>Marcar como Lida
+                    </a>
+                    {% else %}
+                    <span class="badge bg-secondary rounded-pill">Lida</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Nenhuma notificação</h5>
+            <p class="text-muted">Você será notificado quando houver novos chamados ou atualizações importantes.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh das notificações a cada 30 segundos
+setInterval(function() {
+    fetch('{{ url_for("helpdesk.contar_notificacoes_nao_lidas") }}')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.getElementById('notification-badge');
+            if (badge) {
+                if (data.count > 0) {
+                    badge.textContent = data.count;
+                    badge.style.display = 'inline';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        })
+        .catch(error => console.error('Erro ao buscar notificações:', error));
+}, 30000); // 30 segundos
+</script>
+{% endblock %}

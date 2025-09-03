@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Chamado #{{ chamado.id }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>
+                    <i class="fas fa-edit me-2"></i>Editar Chamado #{{ chamado.id }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="titulo" class="form-label">Título *</label>
+                                <input type="text" class="form-control" id="titulo" name="titulo" 
+                                       value="{{ chamado.titulo }}" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="descricao" class="form-label">Descrição *</label>
+                                <textarea class="form-control" id="descricao" name="descricao" rows="4" 
+                                          required>{{ chamado.descricao }}</textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Status *</label>
+                                <select class="form-select" id="status" name="status" required>
+                                    <option value="aberto" {{ 'selected' if chamado.status == 'aberto' else '' }}>Aberto</option>
+                                    <option value="em_andamento" {{ 'selected' if chamado.status == 'em_andamento' else '' }}>Em Andamento</option>
+                                    <option value="finalizado" {{ 'selected' if chamado.status == 'finalizado' else '' }}>Finalizado</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="prioridade" class="form-label">Prioridade *</label>
+                                <select class="form-select" id="prioridade" name="prioridade" required>
+                                    <option value="baixa" {{ 'selected' if chamado.prioridade == 'baixa' else '' }}>Baixa</option>
+                                    <option value="media" {{ 'selected' if chamado.prioridade == 'media' else '' }}>Média</option>
+                                    <option value="alta" {{ 'selected' if chamado.prioridade == 'alta' else '' }}>Alta</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="tecnico_id" class="form-label">Responsável</label>
+                                <select class="form-select" id="tecnico_id" name="tecnico_id">
+                                    <option value="">Selecione um responsável...</option>
+                                    {% for tecnico in tecnicos %}
+                                    <option value="{{ tecnico.id }}" {{ 'selected' if chamado.tecnico_id == tecnico.id else '' }}>
+                                        {{ tecnico.nome }} ({{ tecnico.tipo_usuario.title() }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">
+                                    Técnicos e administradores podem ser responsáveis pelos chamados.
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            {% if empresas %}
+                            <div class="mb-3">
+                                <label for="empresa_id" class="form-label">Empresa</label>
+                                <select class="form-select" id="empresa_id" name="empresa_id">
+                                    <option value="">Selecione...</option>
+                                    {% for empresa in empresas %}
+                                    <option value="{{ empresa.id }}" {{ 'selected' if chamado.empresa_id == empresa.id else '' }}>
+                                        {{ empresa.nome_empresa }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            {% if servicos %}
+                            <div class="mb-3">
+                                <label for="servico_id" class="form-label">Serviço</label>
+                                <select class="form-select" id="servico_id" name="servico_id">
+                                    <option value="">Selecione...</option>
+                                    {% for servico in servicos %}
+                                    <option value="{{ servico.id }}" {{ 'selected' if chamado.servico_id == servico.id else '' }}>
+                                        {{ servico.nome }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Informações do Criador -->
+                    <div class="card mt-3" style="background-color: #4a5568;">
+                        <div class="card-body">
+                            <h6 class="text-white">Informações do Criador</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="text-white">
+                                        <strong>Nome:</strong> {{ chamado.usuario.nome }}<br>
+                                        <strong>Email:</strong> {{ chamado.usuario.email }}<br>
+                                        <strong>Telefone:</strong> {{ chamado.usuario.telefone }}
+                                    </small>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-white">
+                                        <strong>Data de Criação:</strong> {{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}<br>
+                                        {% if chamado.data_finalizacao %}
+                                        <strong>Data de Finalização:</strong> {{ chamado.data_finalizacao.strftime('%d/%m/%Y %H:%M') }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('helpdesk.ver_chamado', chamado_id=chamado.id) }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-arrow-left me-2"></i>Cancelar
+                        </a>
+                        {% if chamado.status != 'finalizado' %}
+                        <button type="button" class="btn btn-success me-md-2" onclick="finalizarChamado()">
+                            <i class="fas fa-check me-2"></i>Finalizar Chamado
+                        </button>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Histórico de Respostas -->
+        {% if chamado.respostas %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6>
+                    <i class="fas fa-history me-2"></i>Histórico de Respostas ({{ chamado.respostas|length }})
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for resposta in chamado.respostas %}
+                <div class="border-start border-3 border-primary ps-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>{{ resposta.usuario.nome }}</strong>
+                        <small class="text-muted">{{ resposta.data_resposta.strftime('%d/%m/%Y %H:%M') }}</small>
+                    </div>
+                    <p class="mb-0" style="white-space: pre-wrap;">{{ resposta.resposta }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function finalizarChamado() {
+    if (confirm('Tem certeza que deseja finalizar este chamado? Esta ação não pode ser desfeita.')) {
+        // Alterar o status para finalizado
+        document.getElementById('status').value = 'finalizado';
+        
+        // Submeter o formulário
+        document.querySelector('form').submit();
+    }
+}
+
+// Alerta quando o status é alterado para finalizado
+document.getElementById('status').addEventListener('change', function() {
+    if (this.value === 'finalizado') {
+        const dataFinalizacao = '{{ chamado.data_finalizacao.strftime("%d/%m/%Y %H:%M") if chamado.data_finalizacao else "" }}';
+        if (!dataFinalizacao) {
+            alert('Este chamado será marcado como finalizado quando você salvar as alterações.');
+        }
+    }
+});
+</script>
+{% endblock %}

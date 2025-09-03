@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Chamados{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h2>
+            <i class="fas fa-ticket-alt me-2"></i>Gerenciar Chamados
+        </h2>
+        <a href="{{ url_for('helpdesk.criar_chamado') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Novo Chamado
+        </a>
+    </div>
+</div>
+
+<!-- Estatísticas -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-primary">
+            <div class="card-body text-center">
+                <h3>{{ chamados|length }}</h3>
+                <p class="mb-0">Total de Chamados</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-danger">
+            <div class="card-body text-center">
+                <h3>{{ chamados|selectattr('status', 'equalto', 'aberto')|list|length }}</h3>
+                <p class="mb-0">Chamados Abertos</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning">
+            <div class="card-body text-center">
+                <h3>{{ chamados|selectattr('status', 'equalto', 'em_andamento')|list|length }}</h3>
+                <p class="mb-0">Em Andamento</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success">
+            <div class="card-body text-center">
+                <h3>{{ chamados|selectattr('status', 'equalto', 'finalizado')|list|length }}</h3>
+                <p class="mb-0">Finalizados</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mt-3">
+    <div class="col-md-4">
+        <input type="text" class="form-control" id="searchChamados" placeholder="Buscar por título ou descrição...">
+    </div>
+    <div class="col-md-2">
+        <select class="form-select" id="statusFilter">
+            <option value="">Todos os status</option>
+            <option value="aberto">Aberto</option>
+            <option value="em_andamento">Em Andamento</option>
+            <option value="finalizado">Finalizado</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select class="form-select" id="prioridadeFilter">
+            <option value="">Todas as prioridades</option>
+            <option value="alta">Alta</option>
+            <option value="media">Média</option>
+            <option value="baixa">Baixa</option>
+        </select>
+    </div>
+    {% if session.user_type == 'administrador' %}
+    <div class="col-md-2">
+        <select class="form-select" id="tipoUsuarioFilter">
+            <option value="">Todos os usuários</option>
+            <option value="meus">Meus chamados</option>
+            <option value="sem_tecnico">Sem técnico</option>
+        </select>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Lista de Chamados -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                {% if chamados %}
+                <div class="row" id="chamadosContainer">
+                    {% for chamado in chamados %}
+                    <div class="col-md-6 col-lg-4 mb-3" 
+                         data-status="{{ chamado.status }}" 
+                         data-prioridade="{{ chamado.prioridade }}"
+                         data-usuario="{{ 'meu' if chamado.tecnico_id == session.user_id else 'sem_tecnico' if chamado.tecnico_id is none else 'outro' }}">
+                        <div class="card h-100 border-start border-3 {{ 'border-danger' if chamado.status == 'aberto' else 'border-warning' if chamado.status == 'em_andamento' else 'border-success' }}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title">{{ chamado.titulo }}</h6>
+                                    {% if session.user_type in ['administrador', 'tecnico'] %}
+                                        {% if chamado.tecnico_id == session.user_id %}
+                                        <span class="badge bg-info">Meu</span>
+                                        {% elif chamado.tecnico_id is none %}
+                                        <span class="badge bg-secondary">Disponível</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                
+                                <p class="card-text small" style="white-space: pre-wrap;">{{ chamado.descricao[:100] }}{% if chamado.descricao|length > 100 %}...{% endif %}</p>
+                                
+                                <div class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-user me-1"></i>{{ chamado.usuario.nome }}<br>
+                                        <i class="fas fa-calendar me-1"></i>{{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}
+                                        {% if chamado.tecnico %}
+                                        <br><i class="fas fa-user-cog me-1"></i>{{ chamado.tecnico.nome }}
+                                        {% endif %}
+                                        {% if chamado.data_finalizacao %}
+                                        <br><i class="fas fa-check-circle me-1"></i><strong>Finalizado:</strong> {{ chamado.data_finalizacao.strftime('%d/%m/%Y %H:%M') }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-{{ 'secondary' if chamado.prioridade == 'baixa' else 'warning' if chamado.prioridade == 'media' else 'danger' }}">
+                                        {{ chamado.prioridade.title() }}
+                                    </span>
+                                    <span class="badge {{ 'bg-danger' if chamado.status == 'aberto' else 'bg-warning' if chamado.status == 'em_andamento' else 'bg-success' }}">
+                                        {{ chamado.status.replace('_', ' ').title() }}
+                                    </span>
+                                </div>
+                                
+                                {% if chamado.empresa %}
+                                <div class="mb-2">
+                                    <small class="text-info">
+                                        <i class="fas fa-building me-1"></i>{{ chamado.empresa.nome_empresa }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                                
+                                {% if chamado.servico %}
+                                <div class="mb-2">
+                                    <small class="text-warning">
+                                        <i class="fas fa-cogs me-1"></i>{{ chamado.servico.nome }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    {% if chamado.respostas|length > 0 %}
+                                    <small class="text-success">
+                                        <i class="fas fa-comments me-1"></i>{{ chamado.respostas|length }} resposta(s)
+                                    </small>
+                                    {% else %}
+                                    <small class="text-muted">Sem respostas</small>
+                                    {% endif %}
+                                    
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('helpdesk.ver_chamado', chamado_id=chamado.id) }}" class="btn btn-outline-primary btn-sm" title="Ver">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if session.user_type == 'administrador' or (session.user_type == 'tecnico' and chamado.status == 'aberto') %}
+                                            <a href="{{ url_for('helpdesk.editar_chamado', chamado_id=chamado.id) }}" class="btn btn-outline-warning btn-sm" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        {% endif %}
+                                        
+                                        {% if session.user_type in ['administrador', 'tecnico'] %}
+                                            {% if chamado.tecnico_id is none and chamado.status == 'aberto' %}
+                                            <a href="{{ url_for('helpdesk.assumir_chamado', chamado_id=chamado.id) }}" class="btn btn-outline-success btn-sm" title="Assumir">
+                                                <i class="fas fa-hand-paper"></i>
+                                            </a>
+                                            {% elif chamado.status != 'finalizado' %}
+                                            <a href="{{ url_for('helpdesk.responder_chamado', chamado_id=chamado.id) }}" class="btn btn-outline-info btn-sm" title="Responder">
+                                                <i class="fas fa-reply"></i>
+                                            </a>
+                                            {% endif %}
+                                            
+                                            {% if session.user_type == 'administrador' and chamado.status != 'finalizado' %}
+                                            <a href="{{ url_for('helpdesk.finalizar_chamado', chamado_id=chamado.id) }}" 
+                                               class="btn btn-outline-success btn-sm" title="Finalizar">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                            {% endif %}
+                                        {% endif %}
+                                        
+                                        {% if session.user_type == 'administrador' or (session.user_type == 'tecnico' and (chamado.tecnico_id is none or chamado.tecnico_id == session.user_id)) %}
+                                        <form method="POST" action="{{ url_for('helpdesk.excluir_chamado', chamado_id=chamado.id) }}" 
+                                              onsubmit="return confirm('Excluir chamado #{{ chamado.id }}?')" style="display: inline;">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhum chamado encontrado</h5>
+                    <p class="text-muted">Quando chamados forem criados, eles aparecerão aqui.</p>
+                    <a href="{{ url_for('helpdesk.criar_chamado') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Criar Primeiro Chamado
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos de filtro
+    const searchInput = document.getElementById('searchChamados');
+    const statusFilter = document.getElementById('statusFilter');
+    const prioridadeFilter = document.getElementById('prioridadeFilter');
+    const tipoUsuarioFilter = document.getElementById('tipoUsuarioFilter');
+    const container = document.getElementById('chamadosContainer');
+    
+    function filterChamados() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedStatus = statusFilter.value;
+        const selectedPrioridade = prioridadeFilter.value;
+        const selectedTipoUsuario = tipoUsuarioFilter ? tipoUsuarioFilter.value : '';
+        const chamadoCards = container.children;
+        
+        for (let card of chamadoCards) {
+            const titulo = card.querySelector('.card-title').textContent.toLowerCase();
+            const descricao = card.querySelector('.card-text').textContent.toLowerCase();
+            const status = card.getAttribute('data-status');
+            const prioridade = card.getAttribute('data-prioridade');
+            const tipoUsuario = card.getAttribute('data-usuario');
+            
+            const matchesSearch = titulo.includes(searchTerm) || descricao.includes(searchTerm);
+            const matchesStatus = selectedStatus === '' || status === selectedStatus;
+            const matchesPrioridade = selectedPrioridade === '' || prioridade === selectedPrioridade;
+            const matchesTipoUsuario = selectedTipoUsuario === '' || tipoUsuario === selectedTipoUsuario;
+            
+            const matches = matchesSearch && matchesStatus && matchesPrioridade && matchesTipoUsuario;
+            card.style.display = matches ? '' : 'none';
+        }
+    }
+    
+    // Event listeners
+    searchInput.addEventListener('input', filterChamados);
+    statusFilter.addEventListener('change', filterChamados);
+    prioridadeFilter.addEventListener('change', filterChamados);
+    if (tipoUsuarioFilter) {
+        tipoUsuarioFilter.addEventListener('change', filterChamados);
+    }
+
+    // Função para recarregar a página quando receber notificação de novo chamado
+    function reloadPageOnNewTicket() {
+        if (window.realTimeNotifications && window.realTimeNotifications.socket) {
+            window.realTimeNotifications.socket.on('new_ticket', function(data) {
+                console.log('🎫 Novo chamado detectado, recarregando página...');
+                // Aguardar 2 segundos para dar tempo do backend processar completamente
+                setTimeout(function() {
+                    window.location.reload();
+                }, 2000);
+            });
+        }
+    }
+    
+    // Configurar auto-reload quando o sistema de notificações estiver pronto
+    if (window.realTimeNotifications) {
+        reloadPageOnNewTicket();
+    } else {
+        // Aguardar o sistema de notificações ser carregado
+        setTimeout(function() {
+            if (window.realTimeNotifications) {
+                reloadPageOnNewTicket();
+            }
+        }, 3000);
+    }
+});
+</script>
+{% endblock %}

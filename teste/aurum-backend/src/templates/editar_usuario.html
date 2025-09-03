@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Usuário{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>
+                    <i class="fas fa-edit me-2"></i>Editar Usuário
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nome" class="form-label">Nome *</label>
+                                <input type="text" class="form-control" id="nome" name="nome" value="{{ usuario.nome }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ usuario.email }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="telefone" class="form-label">Telefone *</label>
+                                <input type="text" class="form-control" id="telefone" name="telefone" value="{{ usuario.telefone }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            {% if session.user_type == 'administrador' %}
+                            <div class="mb-3">
+                                <label for="tipo_usuario" class="form-label">Tipo de Usuário *</label>
+                                <select class="form-select" id="tipo_usuario" name="tipo_usuario" required>
+                                    <option value="administrador" {% if usuario.tipo_usuario == 'administrador' %}selected{% endif %}>Administrador</option>
+                                    <option value="tecnico" {% if usuario.tipo_usuario == 'tecnico' %}selected{% endif %}>Técnico</option>
+                                    <option value="cliente" {% if usuario.tipo_usuario == 'cliente' %}selected{% endif %}>Cliente</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="empresa_id" class="form-label">Empresa (Opcional)</label>
+                                <select class="form-select" id="empresa_id" name="empresa_id">
+                                    <option value="">Selecione...</option>
+                                    {% for empresa in empresas %}
+                                    <option value="{{ empresa.id }}" {% if usuario.empresa_id == empresa.id %}selected{% endif %}>{{ empresa.nome_empresa }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+                            <div class="mb-3">
+                                <label for="senha" class="form-label">Nova Senha (Opcional)</label>
+                                <input type="password" class="form-control" id="senha" name="senha" placeholder="Deixe em branco para manter a atual">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('helpdesk.ver_usuario', usuario_id=usuario.id) }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i>Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

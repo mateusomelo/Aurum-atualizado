@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Finalizar Chamado #{{ chamado.id }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>
+                    <i class="fas fa-check-circle me-2"></i>Finalizar Chamado #{{ chamado.id }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Resumo do Chamado -->
+                <div class="card bg-light mb-4">
+                    <div class="card-body">
+                        <h6>Resumo do Chamado</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Título:</strong> {{ chamado.titulo }}<br>
+                                <strong>Status:</strong> 
+                                <span class="badge 
+                                    {% if chamado.status == 'aberto' %}bg-danger
+                                    {% elif chamado.status == 'em_andamento' %}bg-warning
+                                    {% else %}bg-success{% endif %}">
+                                    {{ chamado.status.replace('_', ' ').title() }}
+                                </span><br>
+                                <strong>Prioridade:</strong> 
+                                <span class="badge 
+                                    {% if chamado.prioridade == 'alta' %}bg-danger
+                                    {% elif chamado.prioridade == 'media' %}bg-warning
+                                    {% else %}bg-info{% endif %}">
+                                    {{ chamado.prioridade.title() }}
+                                </span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Cliente:</strong> {{ chamado.usuario.nome }}<br>
+                                <strong>Data de Criação:</strong> {{ chamado.data_criacao.strftime('%d/%m/%Y %H:%M') }}<br>
+                                {% if chamado.data_finalizacao %}
+                                <strong>Data de Finalização:</strong> {{ chamado.data_finalizacao.strftime('%d/%m/%Y %H:%M') }}<br>
+                                {% endif %}
+                                {% if chamado.tecnico %}
+                                <strong>Técnico:</strong> {{ chamado.tecnico.nome }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Formulário de Finalização -->
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="mensagem" class="form-label">Mensagem de Finalização (Opcional)</label>
+                        <textarea class="form-control" id="mensagem" name="mensagem" rows="4"
+                                  placeholder="Digite uma mensagem explicando a resolução do chamado ou deixe em branco..."></textarea>
+                        <small class="form-text text-muted">
+                            Esta mensagem será adicionada ao histórico do chamado e ficará visível para o cliente.
+                        </small>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Atenção:</strong> Ao finalizar este chamado, ele será marcado como resolvido e o cliente será notificado.
+                        Esta ação não pode ser desfeita facilmente.
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('helpdesk.ver_chamado', chamado_id=chamado.id) }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-arrow-left me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check-circle me-2"></i>Finalizar Chamado
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Histórico de Respostas -->
+        {% if chamado.respostas %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6>
+                    <i class="fas fa-history me-2"></i>Histórico de Respostas ({{ chamado.respostas|length }})
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for resposta in chamado.respostas %}
+                <div class="border-start border-3 border-primary ps-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>{{ resposta.usuario.nome }}</strong>
+                        <small class="text-muted">{{ resposta.data_resposta.strftime('%d/%m/%Y %H:%M') }}</small>
+                    </div>
+                    <p class="mb-0" style="white-space: pre-wrap;">{{ resposta.resposta }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Confirmação antes de finalizar
+document.querySelector('form').addEventListener('submit', function(e) {
+    if (!confirm('Tem certeza que deseja finalizar este chamado? Esta ação marcará o chamado como resolvido.')) {
+        e.preventDefault();
+    }
+});
+
+// Auto-focus no campo de mensagem
+document.getElementById('mensagem').focus();
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+<form id="userForm" class="form-container">
+    <input type="hidden" id="userId" name="id">
+    <div class="form-group">
+        <label for="username">Nome de Usuário</label>
+        <input type="text" id="username" name="username" required>
+    </div>
+    <div class="form-group">
+        <label for="password">Senha</label>
+        <input type="password" id="password" name="password">
+        <small>Deixe em branco para não alterar a senha.</small>
+    </div>
+    <div class="form-group">
+        <label for="profile">Perfil</label>
+        <select id="profile" name="profile" required>
+            <option value="administrador">Administrador</option>
+            <option value="tecnico">Técnico</option>
+            <option value="usuario">Usuário</option>
+        </select>
+    </div>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <button type="button" class="btn btn-secondary" id="cancelFormBtn">Cancelar</button>
+    </div>
+</form>
+

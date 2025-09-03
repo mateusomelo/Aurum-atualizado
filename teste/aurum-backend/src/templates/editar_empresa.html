@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Empresa{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>
+                    <i class="fas fa-edit me-2"></i>Editar Empresa
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="nome_empresa" class="form-label">Nome da Empresa *</label>
+                                <input type="text" class="form-control" id="nome_empresa" name="nome_empresa" value="{{ empresa.nome_empresa }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="organizador" class="form-label">Organizador *</label>
+                                <input type="text" class="form-control" id="organizador" name="organizador" value="{{ empresa.organizador }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="telefone" class="form-label">Telefone *</label>
+                                <input type="text" class="form-control" id="telefone" name="telefone" value="{{ empresa.telefone }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="cnpj" class="form-label">CNPJ *</label>
+                                <input type="text" class="form-control" id="cnpj" name="cnpj" value="{{ empresa.cnpj }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('helpdesk.ver_empresa', empresa_id=empresa.id) }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i>Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

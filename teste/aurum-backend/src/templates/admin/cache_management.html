@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciamento de Cache - Aurum{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-cogs"></i>
+                        Gerenciamento de Cache e Limpeza Automática
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Status do Sistema -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5><i class="fas fa-database"></i> Banco de Dados</h5>
+                                    <p class="mb-0">Tamanho: {{ status.database_size_mb or 0 }} MB</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h5><i class="fas fa-file-alt"></i> Arquivos Temporários</h5>
+                                    <p class="mb-0">Arquivos: {{ status.temp_files_count or 0 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5><i class="fas fa-clock"></i> Última Limpeza</h5>
+                                    <p class="mb-0">{{ status.last_cleanup or 'Nunca executado' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ações de Limpeza -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="mb-3">Ações de Limpeza</h5>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Limpeza Completa -->
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-broom"></i>
+                                        Limpeza Completa
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p>Executa todas as operações de limpeza:</p>
+                                    <ul class="small">
+                                        <li>Sessões expiradas (>24h)</li>
+                                        <li>Arquivos temporários</li>
+                                        <li>Logs antigos (>30 dias)</li>
+                                        <li>Otimização do banco</li>
+                                        <li>Backups antigos</li>
+                                    </ul>
+                                    <form method="POST" action="{{ url_for('cache_management.manual_cleanup_web') }}">
+                                        <button type="submit" class="btn btn-primary btn-block" onclick="showLoading(this)">
+                                            <i class="fas fa-play"></i>
+                                            Executar Limpeza Completa
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ações Individuais -->
+                        <div class="col-md-6">
+                            <div class="card border-secondary">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-tools"></i>
+                                        Ações Individuais
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-warning btn-sm" onclick="cleanupSessions()">
+                                            <i class="fas fa-user-clock"></i>
+                                            Limpar Sessões
+                                        </button>
+                                        <button class="btn btn-outline-info btn-sm" onclick="cleanupFiles()">
+                                            <i class="fas fa-file-excel"></i>
+                                            Limpar Arquivos Temp
+                                        </button>
+                                        <button class="btn btn-outline-success btn-sm" onclick="optimizeDatabase()">
+                                            <i class="fas fa-database"></i>
+                                            Otimizar Banco
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configurações de Agendamento -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        Limpeza Automática Configurada
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <h6 class="text-success">
+                                                <i class="fas fa-check-circle"></i>
+                                                Limpeza Diária
+                                            </h6>
+                                            <p class="small text-muted">Todos os dias às 02:00h</p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6 class="text-success">
+                                                <i class="fas fa-check-circle"></i>
+                                                Sessões
+                                            </h6>
+                                            <p class="small text-muted">A cada 6 horas</p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6 class="text-success">
+                                                <i class="fas fa-check-circle"></i>
+                                                Arquivos Temp
+                                            </h6>
+                                            <p class="small text-muted">A cada 12 horas</p>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-info mb-0">
+                                        <i class="fas fa-info-circle"></i>
+                                        O sistema executa limpeza automática em segundo plano. 
+                                        Use as ações manuais apenas quando necessário.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Logs de Atividade -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-list"></i>
+                                        Log de Atividades
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-light">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            Os logs de limpeza são salvos no arquivo de log da aplicação. 
+                                            Consulte os logs do servidor para ver detalhes das operações.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Loading -->
+<div class="modal fade" id="loadingModal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Carregando...</span>
+                </div>
+                <p class="mt-2 mb-0">Executando limpeza...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showLoading(button) {
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Executando...';
+    $('#loadingModal').modal('show');
+}
+
+async function makeApiCall(endpoint, successMessage) {
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ ' + (data.message || successMessage));
+            location.reload();
+        } else {
+            alert('❌ Erro: ' + (data.error || 'Operação falhou'));
+        }
+    } catch (error) {
+        alert('❌ Erro de conexão: ' + error.message);
+    }
+}
+
+function cleanupSessions() {
+    if (confirm('Deseja limpar todas as sessões expiradas?')) {
+        makeApiCall('/api/cache/sessions/cleanup', 'Sessões limpas com sucesso');
+    }
+}
+
+function cleanupFiles() {
+    if (confirm('Deseja limpar todos os arquivos temporários?')) {
+        makeApiCall('/api/cache/files/cleanup', 'Arquivos temporários removidos');
+    }
+}
+
+function optimizeDatabase() {
+    if (confirm('Deseja otimizar o banco de dados? Esta operação pode demorar alguns minutos.')) {
+        makeApiCall('/api/cache/database/optimize', 'Banco otimizado com sucesso');
+    }
+}
+
+// Auto-refresh da página a cada 30 segundos
+setInterval(function() {
+    if (!document.hidden) {
+        location.reload();
+    }
+}, 30000);
+</script>
+{% endblock %}
