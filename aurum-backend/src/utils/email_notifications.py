@@ -108,7 +108,7 @@ class EmailNotifier:
             self.logger.info(f"🔗 Conectando em {email_config['smtp_server']}:{email_config['smtp_port']}...")
             server = smtplib.SMTP(email_config['smtp_server'], email_config['smtp_port'], timeout=timeout)
             
-            self.logger.info("✅ Conexão estabelecida com sucesso!")
+            self.logger.info("[SUCCESS] Conexão estabelecida com sucesso!")
             
             # Debug do servidor
             self.logger.info("📝 Habilitando debug do servidor SMTP...")
@@ -117,16 +117,16 @@ class EmailNotifier:
             if email_config['use_tls']:
                 self.logger.info("🔐 Iniciando TLS...")
                 server.starttls()
-                self.logger.info("✅ TLS configurado!")
+                self.logger.info("[SUCCESS] TLS configurado!")
             
             self.logger.info("🔑 Tentando fazer login...")
             server.login(email_config['email_user'], email_config['email_password'])
-            self.logger.info("✅ Login realizado com sucesso!")
+            self.logger.info("[SUCCESS] Login realizado com sucesso!")
             
             # Enviar email
             self.logger.info("📤 Enviando email...")
             server.send_message(msg, to_addrs=recipients)
-            self.logger.info("✅ Email enviado com sucesso!")
+            self.logger.info("[SUCCESS] Email enviado com sucesso!")
             
             server.quit()
             self.logger.info(f"🎉 Email enviado com sucesso para: {recipients}")
@@ -174,7 +174,7 @@ class EmailNotifier:
                 <html>
                 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                        <h2 style="color: #2c5aa0;">✅ Chamado Criado com Sucesso</h2>
+                        <h2 style="color: #2c5aa0;">[SUCCESS] Chamado Criado com Sucesso</h2>
                         
                         <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
                             <p><strong>Número do Chamado:</strong> #{kwargs['chamado_id']}</p>

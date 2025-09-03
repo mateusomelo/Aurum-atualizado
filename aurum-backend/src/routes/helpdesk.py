@@ -567,7 +567,7 @@ def assumir_chamado(chamado_id):
         db.session.commit()
         
         # Enviar notificação por email para o técnico
-        cliente = Usuario.query.get(chamado.cliente_id)
+        cliente = Usuario.query.get(chamado.usuario_id)
         empresa = Empresa.query.get(cliente.empresa_id) if cliente.empresa_id else None
         
         try:
@@ -1315,102 +1315,5 @@ def excluir_chamado(chamado_id):
     else:
         return redirect(url_for('helpdesk.dashboard_tecnico'))
 
-# Configurações de Email
-@helpdesk_bp.route('/configuracoes/email', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def configurar_email():
-    from src.models.email_config import EmailConfig
-    
-    if request.method == 'POST':
-        try:
-            # Verificar se já existe uma configuração ativa
-            config_existente = EmailConfig.query.filter_by(is_active=True).first()
-            
-            if config_existente:
-                # Atualizar configuração existente
-                config_existente.mail_server = request.form.get('mail_server')
-                config_existente.mail_port = int(request.form.get('mail_port', 587))
-                config_existente.mail_use_tls = 'mail_use_tls' in request.form
-                config_existente.mail_username = request.form.get('mail_username')
-                config_existente.mail_password = request.form.get('mail_password')
-                config_existente.mail_default_sender = request.form.get('mail_default_sender')
-                config_existente.recipient_email = request.form.get('recipient_email')
-            else:
-                # Criar nova configuração
-                nova_config = EmailConfig(
-                    mail_server=request.form.get('mail_server'),
-                    mail_port=int(request.form.get('mail_port', 587)),
-                    mail_use_tls='mail_use_tls' in request.form,
-                    mail_username=request.form.get('mail_username'),
-                    mail_password=request.form.get('mail_password'),
-                    mail_default_sender=request.form.get('mail_default_sender'),
-                    recipient_email=request.form.get('recipient_email'),
-                    is_active=True
-                )
-                db.session.add(nova_config)
-            
-            db.session.commit()
-            flash('Configurações de email salvas com sucesso!', 'success')
-            
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Erro ao salvar configurações: {str(e)}', 'error')
-        
-        return redirect(url_for('helpdesk.configurar_email'))
-    
-    # GET - Buscar configurações existentes
-    config_atual = EmailConfig.query.filter_by(is_active=True).first()
-    return render_template('configurar_email.html', config=config_atual)
-
-@helpdesk_bp.route('/configuracoes/email/teste', methods=['POST'])
-@login_required
-@admin_required
-def testar_email():
-    from src.utils.email_notifications import email_notifier
-    
-    try:
-        email_teste = request.form.get('email_teste')
-        if not email_teste:
-            flash('Email de teste não informado!', 'error')
-            return redirect(url_for('helpdesk.configurar_email'))
-        
-        # Testar configuração primeiro
-        from src.utils.email_notifications import EmailNotifier
-        notifier = EmailNotifier()
-        config = notifier._get_email_config()
-        
-        # Mostrar info da configuração
-        current_app.logger.info(f"Testando com servidor: {config['smtp_server']}:{config['smtp_port']}")
-        current_app.logger.info(f"Email usuário: {config['email_user']}")
-        
-        # Enviar email de teste
-        sucesso = email_notifier._send_email(
-            to_emails=email_teste,
-            subject="Teste de Configuração - Sistema Helpdesk Aurum",
-            html_content="""
-            <html>
-            <body style="font-family: Arial, sans-serif;">
-                <h2 style="color: #2c5aa0;">✅ Teste de Email</h2>
-                <p>Se você recebeu este email, as configurações estão funcionando corretamente!</p>
-                <p>Sistema Helpdesk Aurum configurado com sucesso.</p>
-                <hr>
-                <p style="font-size: 12px; color: #666;">
-                    Este é um email de teste do Sistema Helpdesk Aurum.
-                </p>
-            </body>
-            </html>
-            """
-        )
-        
-        if sucesso:
-            flash('Email de teste enviado com sucesso!', 'success')
-        else:
-            flash('Erro ao enviar email de teste. Verifique as configurações.', 'error')
-            
-    except Exception as e:
-        flash(f'Erro ao testar email: {str(e)}', 'error')
-    
-    return redirect(url_for('helpdesk.configurar_email'))
 
 # APIs movidas para main.py para evitar problemas de roteamento
