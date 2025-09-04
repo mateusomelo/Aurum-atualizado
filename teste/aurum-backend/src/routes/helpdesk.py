@@ -53,6 +53,63 @@ def criar_notificacao_novo_chamado(chamado):
         print(f"[DEBUG]: ERROR: Erro ao salvar notificações no banco: {e}")
         db.session.rollback()
 
+def criar_notificacao_resposta_chamado(chamado, usuario_resposta):
+    """Cria notificações quando alguém responde a um chamado"""
+    print(f"[DEBUG]: Criando notificações para resposta do chamado ID: {chamado.id}")
+    print(f"[DEBUG]: Usuário que respondeu: {usuario_resposta.nome} ({usuario_resposta.tipo_usuario})")
+    
+    usuarios_para_notificar = []
+    
+    # Se quem respondeu foi um técnico/admin, notificar APENAS o cliente que abriu o chamado
+    if usuario_resposta.tipo_usuario in ['tecnico', 'administrador']:
+        print(f"[DEBUG]: Técnico/Admin respondeu - notificando cliente")
+        # Notificar APENAS o cliente que abriu o chamado
+        if chamado.usuario.id != usuario_resposta.id:  # Não notificar se a pessoa respondeu seu próprio chamado
+            usuarios_para_notificar.append(chamado.usuario)
+    
+    # Se quem respondeu foi um cliente, notificar técnicos e administradores
+    elif usuario_resposta.tipo_usuario == 'cliente':
+        print(f"[DEBUG]: Cliente respondeu - notificando técnicos/admins")
+        # Notificar todos os técnicos e administradores
+        tecnicos_admins = Usuario.query.filter(
+            Usuario.ativo == True,
+            Usuario.tipo_usuario.in_(['tecnico', 'administrador']),
+            Usuario.id != usuario_resposta.id  # Excluir quem está respondendo
+        ).all()
+        usuarios_para_notificar.extend(tecnicos_admins)
+    
+    print(f"[DEBUG]: Encontrados {len(usuarios_para_notificar)} usuários para notificar")
+    
+    # Criar as notificações
+    for usuario in usuarios_para_notificar:
+        print(f"[DEBUG]: Criando notificação para usuário: {usuario.nome} ({usuario.tipo_usuario})")
+        try:
+            if usuario_resposta.tipo_usuario in ['tecnico', 'administrador']:
+                titulo = f"Resposta no chamado: {chamado.titulo}"
+                mensagem = f"{usuario_resposta.nome} ({usuario_resposta.tipo_usuario}) respondeu ao chamado '{chamado.titulo}'"
+            else:
+                titulo = f"Nova resposta do cliente: {chamado.titulo}"
+                mensagem = f"O cliente {usuario_resposta.nome} respondeu ao chamado '{chamado.titulo}'"
+            
+            notificacao = Notificacao(
+                titulo=titulo,
+                mensagem=mensagem,
+                tipo="resposta_chamado",
+                usuario_id=usuario.id,
+                chamado_id=chamado.id
+            )
+            db.session.add(notificacao)
+            print(f"[DEBUG]: Notificação criada para {usuario.nome}")
+        except Exception as e:
+            print(f"[DEBUG]: ERROR: Erro ao criar notificação para {usuario.nome}: {e}")
+    
+    try:
+        db.session.commit()
+        print(f"[DEBUG]: Notificações de resposta salvas no banco com sucesso!")
+    except Exception as e:
+        print(f"[DEBUG]: ERROR: Erro ao salvar notificações de resposta no banco: {e}")
+        db.session.rollback()
+
 @helpdesk_bp.route('/notificacoes')
 @login_required
 def listar_notificacoes():
@@ -549,6 +606,13 @@ def responder_chamado(chamado_id):
         db.session.add(nova_resposta)
         db.session.commit()
         
+        # Criar notificações para a resposta
+        try:
+            usuario_resposta = Usuario.query.get(session['user_id'])
+            criar_notificacao_resposta_chamado(chamado, usuario_resposta)
+        except Exception as e:
+            print(f"[DEBUG]: Erro ao criar notificações de resposta: {e}")
+        
         flash('Resposta adicionada com sucesso!', 'success')
         return redirect(url_for('helpdesk.ver_chamado', chamado_id=chamado_id))
     
@@ -662,6 +726,24 @@ def finalizar_chamado(chamado_id):
             db.session.add(nova_resposta)
         
         db.session.commit()
+        
+        # Criar notificações para finalização do chamado
+        try:
+            usuario_finalizou = Usuario.query.get(session['user_id'])
+            # Notificar APENAS o cliente que abriu o chamado
+            if chamado.usuario.id != session['user_id']:
+                notificacao = Notificacao(
+                    titulo=f"Chamado finalizado: {chamado.titulo}",
+                    mensagem=f"Seu chamado '{chamado.titulo}' foi finalizado por {usuario_finalizou.nome}",
+                    tipo="chamado_finalizado",
+                    usuario_id=chamado.usuario.id,
+                    chamado_id=chamado.id
+                )
+                db.session.add(notificacao)
+                db.session.commit()
+        except Exception as e:
+            print(f"[DEBUG]: Erro ao criar notificações de finalização: {e}")
+        
         flash('Chamado finalizado com sucesso!', 'success')
         return redirect(url_for('helpdesk.ver_chamado', chamado_id=chamado_id))
     
