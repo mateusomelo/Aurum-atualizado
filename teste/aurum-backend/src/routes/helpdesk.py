@@ -10,6 +10,7 @@ import logging
 from src.utils.activity_logger import activity_logger, log_endpoint_access
 from src.utils.email_notifications import email_notifier
 from src.utils.debug_logging import debug_session_info, debug_print
+from sqlalchemy import case
 
 helpdesk_bp = Blueprint('helpdesk', __name__)
 
@@ -232,8 +233,16 @@ def dashboard_admin():
     chamados_andamento = Chamado.query.filter_by(status='em_andamento').count()
     chamados_finalizados = Chamado.query.filter_by(status='finalizado').count()
     
-    # Chamados recentes para visualização em quadrados
-    chamados_recentes = Chamado.query.order_by(Chamado.data_criacao.desc()).limit(10).all()
+    # Chamados ordenados por prioridade: abertos primeiro, depois em andamento, finalizados por último
+    chamados_recentes = Chamado.query.order_by(
+        case(
+            (Chamado.status == 'aberto', 1),
+            (Chamado.status == 'em_andamento', 2),
+            (Chamado.status == 'finalizado', 3),
+            else_=4
+        ),
+        Chamado.data_criacao.desc()
+    ).limit(10).all()
     
     return render_template('dashboard_admin.html',
                          total_chamados=total_chamados,
@@ -246,8 +255,16 @@ def dashboard_admin():
 @login_required
 @admin_or_tecnico_required
 def dashboard_tecnico():
-    # Técnicos podem ver todos os chamados
-    chamados = Chamado.query.order_by(Chamado.data_criacao.desc()).all()
+    # Técnicos podem ver todos os chamados ordenados por prioridade de status
+    chamados = Chamado.query.order_by(
+        case(
+            (Chamado.status == 'aberto', 1),
+            (Chamado.status == 'em_andamento', 2),
+            (Chamado.status == 'finalizado', 3),
+            else_=4
+        ),
+        Chamado.data_criacao.desc()
+    ).all()
     
     return render_template('dashboard_tecnico.html', chamados=chamados)
 
@@ -260,13 +277,29 @@ def dashboard_cliente():
     usuario_atual = Usuario.query.get(user_id)
     
     if usuario_atual and usuario_atual.empresa_id:
-        # Clientes veem chamados de usuários da mesma empresa
+        # Clientes veem chamados de usuários da mesma empresa ordenados por prioridade de status
         usuarios_da_empresa = Usuario.query.filter_by(empresa_id=usuario_atual.empresa_id).all()
         usuario_ids = [u.id for u in usuarios_da_empresa]
-        chamados = Chamado.query.filter(Chamado.usuario_id.in_(usuario_ids)).order_by(Chamado.data_criacao.desc()).all()
+        chamados = Chamado.query.filter(Chamado.usuario_id.in_(usuario_ids)).order_by(
+            case(
+                (Chamado.status == 'aberto', 1),
+                (Chamado.status == 'em_andamento', 2),
+                (Chamado.status == 'finalizado', 3),
+                else_=4
+            ),
+            Chamado.data_criacao.desc()
+        ).all()
     else:
-        # Se não tem empresa vinculada, vê apenas os próprios chamados
-        chamados = Chamado.query.filter_by(usuario_id=user_id).order_by(Chamado.data_criacao.desc()).all()
+        # Se não tem empresa vinculada, vê apenas os próprios chamados ordenados por prioridade de status
+        chamados = Chamado.query.filter_by(usuario_id=user_id).order_by(
+            case(
+                (Chamado.status == 'aberto', 1),
+                (Chamado.status == 'em_andamento', 2),
+                (Chamado.status == 'finalizado', 3),
+                else_=4
+            ),
+            Chamado.data_criacao.desc()
+        ).all()
     
     return render_template('dashboard_cliente.html', chamados=chamados)
 
@@ -304,10 +337,26 @@ def listar_chamados():
     user_id = session['user_id']
     
     if user_type == 'administrador':
-        chamados = Chamado.query.order_by(Chamado.data_criacao.desc()).all()
+        chamados = Chamado.query.order_by(
+            case(
+                (Chamado.status == 'aberto', 1),
+                (Chamado.status == 'em_andamento', 2),
+                (Chamado.status == 'finalizado', 3),
+                else_=4
+            ),
+            Chamado.data_criacao.desc()
+        ).all()
     elif user_type == 'tecnico':
-        # Técnicos podem ver todos os chamados
-        chamados = Chamado.query.order_by(Chamado.data_criacao.desc()).all()
+        # Técnicos podem ver todos os chamados ordenados por prioridade de status
+        chamados = Chamado.query.order_by(
+            case(
+                (Chamado.status == 'aberto', 1),
+                (Chamado.status == 'em_andamento', 2),
+                (Chamado.status == 'finalizado', 3),
+                else_=4
+            ),
+            Chamado.data_criacao.desc()
+        ).all()
     else:
         # Clientes veem chamados de usuários da mesma empresa
         usuario_atual = Usuario.query.get(user_id)
@@ -316,10 +365,26 @@ def listar_chamados():
             # Buscar todos os usuários da mesma empresa
             usuarios_da_empresa = Usuario.query.filter_by(empresa_id=usuario_atual.empresa_id).all()
             usuario_ids = [u.id for u in usuarios_da_empresa]
-            chamados = Chamado.query.filter(Chamado.usuario_id.in_(usuario_ids)).order_by(Chamado.data_criacao.desc()).all()
+            chamados = Chamado.query.filter(Chamado.usuario_id.in_(usuario_ids)).order_by(
+                case(
+                    (Chamado.status == 'aberto', 1),
+                    (Chamado.status == 'em_andamento', 2),
+                    (Chamado.status == 'finalizado', 3),
+                    else_=4
+                ),
+                Chamado.data_criacao.desc()
+            ).all()
         else:
             # Se não tem empresa vinculada, vê apenas os próprios chamados
-            chamados = Chamado.query.filter_by(usuario_id=user_id).order_by(Chamado.data_criacao.desc()).all()
+            chamados = Chamado.query.filter_by(usuario_id=user_id).order_by(
+                case(
+                    (Chamado.status == 'aberto', 1),
+                    (Chamado.status == 'em_andamento', 2),
+                    (Chamado.status == 'finalizado', 3),
+                    else_=4
+                ),
+                Chamado.data_criacao.desc()
+            ).all()
     
     return render_template('listar_chamados.html', chamados=chamados)
 
