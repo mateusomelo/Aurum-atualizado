@@ -302,21 +302,18 @@
             
             {% else %}
             <!-- Menu do Cliente -->
-            <!-- Meus Chamados -->
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="{{ url_for('helpdesk.listar_chamados') }}" role="button" data-bs-toggle="collapse" data-bs-target="#meusChamadosMenu" aria-expanded="false">
-                    <i class="fas fa-ticket-alt"></i>Meus Chamados
+            <!-- Lista de Chamados -->
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('helpdesk.listar_chamados') }}">
+                    <i class="fas fa-list"></i>Lista de Chamados
                 </a>
-                <div class="collapse" id="meusChamadosMenu">
-                    <ul class="admin-sidebar-submenu">
-                        <li><a class="nav-link" href="{{ url_for('helpdesk.listar_chamados') }}">
-                            <i class="fas fa-list"></i>Ver Chamados
-                        </a></li>
-                        <li><a class="nav-link" href="{{ url_for('helpdesk.criar_chamado') }}">
-                            <i class="fas fa-plus"></i>Criar Chamado
-                        </a></li>
-                    </ul>
-                </div>
+            </li>
+            
+            <!-- Criar Chamado -->
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('helpdesk.criar_chamado') }}">
+                    <i class="fas fa-plus"></i>Criar Chamado
+                </a>
             </li>
             
             <!-- Relatórios do Cliente -->
