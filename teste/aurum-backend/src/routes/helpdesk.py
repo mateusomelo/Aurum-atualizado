@@ -188,7 +188,7 @@ def login():
             elif user.tipo_usuario == 'tecnico':
                 return redirect(url_for('helpdesk.dashboard_tecnico'))
             else:
-                return redirect(url_for('helpdesk.dashboard_cliente'))
+                return redirect(url_for('helpdesk.listar_chamados'))
         else:
             # Log de falha no login
             user_name = user.nome if user else email
@@ -585,7 +585,7 @@ def criar_chamado():
         elif user_type == 'tecnico':
             return redirect(url_for('helpdesk.dashboard_tecnico'))
         else:
-            return redirect(url_for('helpdesk.dashboard_cliente'))
+            return redirect(url_for('helpdesk.listar_chamados'))
     
     # Buscar empresas e serviços para o formulário
     empresas = Empresa.query.filter_by(ativa=True).all()
@@ -621,7 +621,7 @@ def ver_chamado(chamado_id):
                    usuario_do_chamado and usuario_do_chamado.empresa_id and
                    usuario_atual.empresa_id == usuario_do_chamado.empresa_id):
                 flash('Acesso negado!', 'error')
-                return redirect(url_for('helpdesk.dashboard_cliente'))
+                return redirect(url_for('helpdesk.listar_chamados'))
     
     return render_template('ver_chamado.html', chamado=chamado)
 
@@ -646,7 +646,7 @@ def responder_chamado(chamado_id):
                    usuario_do_chamado and usuario_do_chamado.empresa_id and
                    usuario_atual.empresa_id == usuario_do_chamado.empresa_id):
                 flash('Você só pode responder a chamados da sua empresa!', 'error')
-                return redirect(url_for('helpdesk.dashboard_cliente'))
+                return redirect(url_for('helpdesk.listar_chamados'))
     
     if request.method == 'POST':
         resposta = request.form['resposta']

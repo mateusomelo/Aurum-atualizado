@@ -128,12 +128,14 @@
         </div>
         
         <ul class="admin-sidebar-nav">
-            <!-- Dashboard -->
+            {% if session.user_type in ['administrador', 'tecnico'] %}
+            <!-- Dashboard (apenas para admin e técnicos) -->
             <li class="nav-item">
-                <a class="nav-link" href="{% if session.user_type == 'administrador' %}{{ url_for('helpdesk.dashboard_admin') }}{% elif session.user_type == 'tecnico' %}{{ url_for('helpdesk.dashboard_tecnico') }}{% else %}{{ url_for('helpdesk.dashboard_cliente') }}{% endif %}">
+                <a class="nav-link" href="{% if session.user_type == 'administrador' %}{{ url_for('helpdesk.dashboard_admin') }}{% else %}{{ url_for('helpdesk.dashboard_tecnico') }}{% endif %}">
                     <i class="fas fa-tachometer-alt"></i>Dashboard
                 </a>
             </li>
+            {% endif %}
             
             {% if session.user_type == 'administrador' %}
             <!-- Menu completo do Administrador -->
@@ -306,13 +308,6 @@
             <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('helpdesk.listar_chamados') }}">
                     <i class="fas fa-list"></i>Lista de Chamados
-                </a>
-            </li>
-            
-            <!-- Criar Chamado -->
-            <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('helpdesk.criar_chamado') }}">
-                    <i class="fas fa-plus"></i>Criar Chamado
                 </a>
             </li>
             
