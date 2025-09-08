@@ -693,6 +693,17 @@ def assumir_chamado(chamado_id):
         tecnico = Usuario.query.get(session['user_id'])
         chamado.tecnico_id = session['user_id']
         chamado.status = 'em_andamento'
+        
+        # Marcar notificações relacionadas como lidas para o técnico que assumiu
+        notificacoes_relacionadas = Notificacao.query.filter_by(
+            usuario_id=session['user_id'], 
+            chamado_id=chamado_id,
+            lida=False
+        ).all()
+        
+        for notificacao in notificacoes_relacionadas:
+            notificacao.lida = True
+        
         db.session.commit()
         
         # Enviar notificação por email para o técnico
