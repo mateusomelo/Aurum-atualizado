@@ -3,6 +3,50 @@
 {% block title %}Chamado #{{ chamado.id }}{% endblock %}
 
 {% block content %}
+<style>
+/* Proteção elegante para descrição na página individual */
+.descricao-privada-individual {
+    background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%, transparent 75%, #f8f9fa 75%, #f8f9fa),
+                linear-gradient(45deg, #f8f9fa 25%, transparent 25%, transparent 75%, #f8f9fa 75%, #f8f9fa);
+    background-size: 12px 12px;
+    background-position: 0 0, 6px 6px;
+    color: transparent !important;
+    text-shadow: 0 0 10px rgba(108, 117, 125, 0.5) !important;
+    filter: blur(4px) !important;
+    user-select: none !important;
+    border: 2px dashed #dee2e6 !important;
+    border-radius: 8px !important;
+    padding: 20px !important;
+    position: relative !important;
+    min-height: 80px !important;
+}
+
+.descricao-privada-individual::before {
+    content: "🔒 Conteúdo Protegido - Privacidade Garantida";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(108, 117, 125, 0.9);
+    color: white;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.descricao-privada-individual:hover {
+    filter: blur(6px) !important;
+    background: linear-gradient(45deg, #e9ecef 25%, transparent 25%, transparent 75%, #e9ecef 75%, #e9ecef),
+                linear-gradient(45deg, #e9ecef 25%, transparent 25%, transparent 75%, #e9ecef 75%, #e9ecef);
+    background-size: 12px 12px;
+    background-position: 0 0, 6px 6px;
+}
+</style>
+
 <div class="row">
     <div class="col-md-8">
         <div class="card">

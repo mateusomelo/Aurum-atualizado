@@ -3,6 +3,49 @@
 {% block title %}Chamados{% endblock %}
 
 {% block content %}
+<style>
+/* Proteção elegante apenas para descrições de outros usuários */
+.descricao-privada {
+    background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%, transparent 75%, #f8f9fa 75%, #f8f9fa),
+                linear-gradient(45deg, #f8f9fa 25%, transparent 25%, transparent 75%, #f8f9fa 75%, #f8f9fa);
+    background-size: 8px 8px;
+    background-position: 0 0, 4px 4px;
+    color: transparent !important;
+    text-shadow: 0 0 8px rgba(108, 117, 125, 0.5) !important;
+    filter: blur(3px) !important;
+    user-select: none !important;
+    border: 1px dashed #dee2e6 !important;
+    border-radius: 6px !important;
+    padding: 8px !important;
+    position: relative !important;
+    min-height: 40px !important;
+}
+
+.descricao-privada::before {
+    content: "🔒 Conteúdo Protegido";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(108, 117, 125, 0.9);
+    color: white;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.descricao-privada:hover {
+    filter: blur(5px) !important;
+    background: linear-gradient(45deg, #e9ecef 25%, transparent 25%, transparent 75%, #e9ecef 75%, #e9ecef),
+                linear-gradient(45deg, #e9ecef 25%, transparent 25%, transparent 75%, #e9ecef 75%, #e9ecef);
+    background-size: 8px 8px;
+    background-position: 0 0, 4px 4px;
+}
+</style>
+
 <div class="row">
     <div class="col-12 d-flex justify-content-between align-items-center">
         <h2>
@@ -134,7 +177,7 @@
                                     {% endif %}
                                 </div>
                                 
-                                <p class="card-text small" style="white-space: pre-wrap;">{{ chamado.descricao[:100] }}{% if chamado.descricao|length > 100 %}...{% endif %}</p>
+                                <p class="card-text small {% if session.user_type == 'cliente' and chamado.usuario_id != session.user_id %}descricao-privada{% endif %}" style="white-space: pre-wrap;">{% if session.user_type == 'cliente' and chamado.usuario_id != session.user_id %}••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••{% else %}{{ chamado.descricao[:100] }}{% if chamado.descricao|length > 100 %}...{% endif %}{% endif %}</p>
                                 
                                 <div class="mb-2">
                                     <small class="text-muted">
@@ -263,7 +306,7 @@
                                             {% endif %}
                                         </div>
                                         
-                                        <p class="card-text small" style="white-space: pre-wrap;">{{ chamado.descricao[:100] }}{% if chamado.descricao|length > 100 %}...{% endif %}</p>
+                                        <p class="card-text small {% if session.user_type == 'cliente' and chamado.usuario_id != session.user_id %}descricao-privada{% endif %}" style="white-space: pre-wrap;">{% if session.user_type == 'cliente' and chamado.usuario_id != session.user_id %}••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••{% else %}{{ chamado.descricao[:100] }}{% if chamado.descricao|length > 100 %}...{% endif %}{% endif %}</p>
                                         
                                         <div class="mb-2">
                                             <small class="text-muted">
