@@ -105,46 +105,49 @@ class CacheCleaner:
             logger.error(f"Erro na limpeza de logs: {e}")
             return 0
     
-    def optimize_sqlite_database(self):
+    def optimize_sqlite_database(self, create_backup=False):
         """Otimiza o banco SQLite (VACUUM e ANALYZE)"""
         try:
             if not self.db_path or not os.path.exists(self.db_path):
                 return False
-            
-            # Backup básico antes da otimização
-            backup_path = f"{self.db_path}.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            
-            with sqlite3.connect(self.db_path) as source:
-                with sqlite3.connect(backup_path) as backup:
-                    source.backup(backup)
-            
-            # Otimização
+
+            backup_path = None
+            if create_backup:
+                # Backup apenas se solicitado explicitamente
+                backup_path = f"{self.db_path}.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+                with sqlite3.connect(self.db_path) as source:
+                    with sqlite3.connect(backup_path) as backup:
+                        source.backup(backup)
+
+                logger.info(f"Backup criado: {backup_path}")
+
+            # Otimização sem backup automático
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute('VACUUM')
                 conn.execute('ANALYZE')
                 conn.commit()
-            
-            # Remove backup se otimização foi bem-sucedida
-            os.remove(backup_path)
-            
+
             logger.info("Banco SQLite otimizado com sucesso")
             return True
         except Exception as e:
+            if backup_path and os.path.exists(backup_path):
+                os.remove(backup_path)  # Remove backup se houve erro
             logger.error(f"Erro na otimização do banco: {e}")
             return False
     
-    def cleanup_old_database_backups(self, days_old=7):
-        """Remove backups antigos do banco"""
+    def cleanup_old_database_backups(self, days_old=365):
+        """Remove backups antigos do banco (padrão: 1 ano)"""
         try:
             if not self.db_path:
                 return 0
-            
+
             db_dir = os.path.dirname(self.db_path)
             backup_pattern = os.path.join(db_dir, "*.backup_*")
-            
+
             cutoff_time = time.time() - (days_old * 24 * 3600)
             cleaned_count = 0
-            
+
             for backup_file in glob.glob(backup_pattern):
                 try:
                     if os.path.getmtime(backup_file) < cutoff_time:
@@ -152,49 +155,88 @@ class CacheCleaner:
                         cleaned_count += 1
                 except OSError:
                     pass
-            
-            logger.info(f"Limpeza de backups: {cleaned_count} arquivos removidos")
+
+            logger.info(f"Limpeza de backups antigos: {cleaned_count} arquivos removidos (mais de {days_old} dias)")
             return cleaned_count
         except Exception as e:
             logger.error(f"Erro na limpeza de backups: {e}")
             return 0
+
+    def create_annual_backup(self):
+        """Cria backup anual do banco de dados"""
+        try:
+            if not self.db_path or not os.path.exists(self.db_path):
+                return False
+
+            current_year = datetime.now().year
+            backup_path = f"{self.db_path}.backup_anual_{current_year}"
+
+            # Verificar se já existe backup do ano atual
+            if os.path.exists(backup_path):
+                logger.info(f"Backup anual {current_year} já existe")
+                return True
+
+            with sqlite3.connect(self.db_path) as source:
+                with sqlite3.connect(backup_path) as backup:
+                    source.backup(backup)
+
+            logger.info(f"Backup anual criado: {backup_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Erro ao criar backup anual: {e}")
+            return False
     
     def run_full_cleanup(self):
-        """Executa limpeza completa do sistema"""
+        """Executa limpeza completa do sistema (sem backup automático)"""
         logger.info("Iniciando limpeza automática do sistema...")
-        
+
         results = {
             'sessions': self.cleanup_expired_sessions(),
             'temp_files': self.cleanup_temp_files(),
             'logs': self.cleanup_old_logs(),
-            'database_optimized': self.optimize_sqlite_database(),
+            'database_optimized': self.optimize_sqlite_database(create_backup=False),  # Sem backup automático
             'old_backups': self.cleanup_old_database_backups()
         }
-        
+
         logger.info("Limpeza automática concluída")
         logger.info(f"Resultados: {results}")
         return results
     
+    def check_annual_backup(self):
+        """Verifica se precisa fazer backup anual (1º de janeiro)"""
+        now = datetime.now()
+        if now.month == 1 and now.day == 1:
+            # Só executa uma vez no dia 1º de janeiro
+            current_year = now.year
+            backup_path = f"{self.db_path}.backup_anual_{current_year}"
+            if not os.path.exists(backup_path):
+                logger.info("Executando backup anual...")
+                return self.create_annual_backup()
+        return False
+
     def start_scheduler(self):
         """Inicia o agendador de limpeza automática"""
-        # Limpeza diária às 2:00 AM
+        # Limpeza diária às 2:00 AM (sem backup)
         schedule.every().day.at("02:00").do(self.run_full_cleanup)
-        
-        # Limpeza de sessões a cada 6 horas
-        schedule.every(6).hours.do(self.cleanup_expired_sessions)
-        
-        # Limpeza de arquivos temporários a cada 12 horas
-        schedule.every(12).hours.do(self.cleanup_temp_files)
-        
+
+        # Verificação de backup anual diariamente às 3:30 AM
+        schedule.every().day.at("03:30").do(self.check_annual_backup)
+
+        # Limpeza de sessões a cada 12 horas (reduzido de 6h)
+        schedule.every(12).hours.do(self.cleanup_expired_sessions)
+
+        # Limpeza de arquivos temporários diariamente às 3:00 AM
+        schedule.every().day.at("03:00").do(self.cleanup_temp_files)
+
         def run_scheduler():
             while True:
                 schedule.run_pending()
-                time.sleep(60)  # Verifica a cada minuto
-        
+                time.sleep(3600)  # Verifica a cada hora
+
         scheduler_thread = Thread(target=run_scheduler, daemon=True)
         scheduler_thread.start()
-        
-        logger.info("Scheduler de limpeza automática iniciado")
+
+        logger.info("Scheduler de limpeza automática iniciado - Backup anual configurado")
         return scheduler_thread
     
     def get_cleanup_status(self):
