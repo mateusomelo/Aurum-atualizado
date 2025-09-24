@@ -20,14 +20,8 @@ from src.routes.clients import clients_bp
 from src.routes.service_types import service_types_bp
 from src.routes.contact import contact_bp
 from src.models.helpdesk_models import Usuario, Empresa, Servico, Chamado, RespostaChamado
-from src.models.activity_log import ActivityLog
 from src.routes.helpdesk import helpdesk_bp
 from src.routes.cache_management import cache_bp, init_cache_cleaner
-from src.routes.activity_logs import activity_logs_bp
-from src.routes.debug_logs import debug_logs_bp
-from src.utils.global_logging_middleware import global_logging_middleware
-from src.utils.database_logging_hooks import database_logging_hooks
-from src.utils.log_cleanup import log_cleanup_manager
 from werkzeug.security import generate_password_hash
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
@@ -42,14 +36,6 @@ socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=
 # Inicializa o bcrypt
 bcrypt.init_app(app)
 
-# Inicializa middleware de logging global
-global_logging_middleware.init_app(app)
-
-# Inicializa hooks de logging do banco de dados
-database_logging_hooks.init_app(app)
-
-# Inicializa sistema de limpeza de logs
-log_cleanup_manager.init_app(app)
 
 app.register_blueprint(user_bp, url_prefix='/api')
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -59,8 +45,6 @@ app.register_blueprint(clients_bp, url_prefix='/api')
 app.register_blueprint(service_types_bp, url_prefix='/api')
 app.register_blueprint(contact_bp, url_prefix='/api')
 app.register_blueprint(helpdesk_bp)
-app.register_blueprint(activity_logs_bp)
-app.register_blueprint(debug_logs_bp)
 # app.register_blueprint(cache_bp)  # Interface visual removida - apenas automação ativa
 
 # APIs para os filtros dos relatórios

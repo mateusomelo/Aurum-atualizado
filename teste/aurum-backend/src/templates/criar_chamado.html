@@ -65,7 +65,7 @@
                     {% endif %}
                     
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{% if session.user_type == 'administrador' %}{{ url_for('helpdesk.dashboard_admin') }}{% elif session.user_type == 'tecnico' %}{{ url_for('helpdesk.dashboard_tecnico') }}{% else %}{{ url_for('helpdesk.listar_chamados') }}{% endif %}" 
+                        <a href="{% if session.user_type == 'administrador' %}{{ url_for('helpdesk.dashboard_admin') }}{% else %}{{ url_for('helpdesk.listar_chamados') }}{% endif %}"
                            class="btn btn-secondary me-md-2">
                             <i class="fas fa-arrow-left me-2"></i>Voltar
                         </a>

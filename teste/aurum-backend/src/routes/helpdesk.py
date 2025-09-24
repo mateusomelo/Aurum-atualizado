@@ -7,7 +7,6 @@ from src.utils.timezone_utils import get_brazil_time
 from src.utils.export_utils import ReportExporter
 from flask import send_file
 import logging
-from src.utils.activity_logger import activity_logger, log_endpoint_access
 from src.utils.email_notifications import email_notifier
 from src.utils.debug_logging import debug_session_info, debug_print
 from sqlalchemy import case
@@ -172,33 +171,18 @@ def login():
             debug_print(f"[SESSION]: Sessão configurada - user_id: {session.get('user_id')}")
             debug_session_info()
             
-            # Log de login bem-sucedido
-            debug_print("[LOG]: Tentando registrar log de login...")
-            activity_logger.log_login(
-                user_id=user.id,
-                user_name=user.nome,
-                user_type=user.tipo_usuario,
-                success=True
-            )
+            # Log de login bem-sucedido removido para otimização
             
             flash('Login realizado com sucesso!', 'success')
             
             if user.tipo_usuario == 'administrador':
                 return redirect(url_for('helpdesk.dashboard_admin'))
             elif user.tipo_usuario == 'tecnico':
-                return redirect(url_for('helpdesk.dashboard_tecnico'))
+                return redirect(url_for('helpdesk.listar_chamados'))
             else:
                 return redirect(url_for('helpdesk.listar_chamados'))
         else:
-            # Log de falha no login
-            user_name = user.nome if user else email
-            activity_logger.log_login(
-                user_id=user.id if user else None,
-                user_name=user_name,
-                user_type=None,
-                success=False,
-                reason="Email ou senha inválidos"
-            )
+            # Log de falha no login removido para otimização
             
             flash('Email ou senha inválidos!', 'error')
     
@@ -206,12 +190,7 @@ def login():
 
 @helpdesk_bp.route('/logout')
 def logout():
-    # Log de logout antes de limpar sessão
-    if 'user_id' in session:
-        activity_logger.log_logout(
-            user_id=session['user_id'],
-            user_name=session.get('user_name', 'Usuário desconhecido')
-        )
+    # Log de logout removido para otimização
     
     session.clear()
     flash('Logout realizado com sucesso!', 'success')
@@ -221,11 +200,7 @@ def logout():
 @login_required
 @admin_required
 def dashboard_admin():
-    # Log do acesso ao dashboard admin
-    activity_logger.log_view(
-        module="dashboard",
-        description="Acessou dashboard do administrador"
-    )
+    # Log do acesso ao dashboard removido para otimização
     
     # Estatísticas para gráficos
     total_chamados = Chamado.query.count()
@@ -540,21 +515,7 @@ def criar_chamado():
             # Não interromper o fluxo se o email falhar
             pass
         
-        # Log da criação do chamado
-        activity_logger.log_create(
-            module="chamados",
-            entity_type="Chamado",
-            entity_id=novo_chamado.id,
-            description=f"Chamado '{novo_chamado.titulo}' criado com prioridade {novo_chamado.prioridade}",
-            new_values={
-                'titulo': novo_chamado.titulo,
-                'descricao': novo_chamado.descricao,
-                'prioridade': novo_chamado.prioridade,
-                'status': novo_chamado.status,
-                'empresa_id': novo_chamado.empresa_id,
-                'servico_id': novo_chamado.servico_id
-            }
-        )
+        # Log da criação do chamado removido para otimização
         
         # Criar notificações para técnicos e administradores
         try:
@@ -583,7 +544,7 @@ def criar_chamado():
         if user_type == 'administrador':
             return redirect(url_for('helpdesk.dashboard_admin'))
         elif user_type == 'tecnico':
-            return redirect(url_for('helpdesk.dashboard_tecnico'))
+            return redirect(url_for('helpdesk.listar_chamados'))
         else:
             return redirect(url_for('helpdesk.listar_chamados'))
     
@@ -598,13 +559,7 @@ def criar_chamado():
 def ver_chamado(chamado_id):
     chamado = Chamado.query.get_or_404(chamado_id)
     
-    # Log da visualização do chamado
-    activity_logger.log_view(
-        module="chamados",
-        entity_type="Chamado",
-        entity_id=chamado_id,
-        description=f"Visualizou chamado '{chamado.titulo}' (Status: {chamado.status})"
-    )
+    # Log da visualização do chamado removido para otimização
     
     # Verificar permissões
     user_type = session['user_type']
@@ -728,7 +683,7 @@ def assumir_chamado(chamado_id):
     if user_type == 'administrador':
         return redirect(url_for('helpdesk.dashboard_admin'))
     else:
-        return redirect(url_for('helpdesk.dashboard_tecnico'))
+        return redirect(url_for('helpdesk.listar_chamados'))
 
 @helpdesk_bp.route('/chamado/<int:chamado_id>/editar', methods=['GET', 'POST'])
 @login_required
@@ -832,13 +787,7 @@ def finalizar_chamado(chamado_id):
 def ver_usuario(usuario_id):
     usuario = Usuario.query.get_or_404(usuario_id)
     
-    # Log da visualização do usuário
-    activity_logger.log_view(
-        module="usuarios",
-        entity_type="Usuario",
-        entity_id=usuario_id,
-        description=f"Visualizou usuário '{usuario.nome}' ({usuario.email})"
-    )
+    # Log da visualização do usuário removido para otimização
     
     return render_template('ver_usuario.html', usuario=usuario)
 
@@ -887,15 +836,7 @@ def editar_usuario(usuario_id):
         
         db.session.commit()
         
-        # Log da edição do usuário
-        activity_logger.log_update(
-            module="usuarios",
-            entity_type="Usuario",
-            entity_id=usuario.id,
-            description=f"Editou usuário '{usuario.nome}' ({usuario.email})",
-            old_values=old_values,
-            new_values=new_values
-        )
+        # Log da edição do usuário removido para otimização
         
         flash('Usuário atualizado com sucesso!', 'success')
         return redirect(url_for('helpdesk.ver_usuario', usuario_id=usuario_id))
@@ -927,13 +868,7 @@ def desativar_usuario(usuario_id):
     db.session.delete(usuario)
     db.session.commit()
     
-    # Log da exclusão do usuário
-    activity_logger.log_delete(
-        module="usuarios",
-        entity_type="Usuario", 
-        entity_id=usuario_id,
-        description=f"Excluiu usuário '{nome_usuario}' ({email_usuario})"
-    )
+    # Log da exclusão do usuário removido para otimização
     
     flash('Usuário excluído com sucesso!', 'success')
     return redirect(url_for('helpdesk.listar_usuarios'))
@@ -945,13 +880,7 @@ def desativar_usuario(usuario_id):
 def ver_empresa(empresa_id):
     empresa = Empresa.query.get_or_404(empresa_id)
     
-    # Log da visualização da empresa
-    activity_logger.log_view(
-        module="empresas",
-        entity_type="Empresa", 
-        entity_id=empresa_id,
-        description=f"Visualizou empresa '{empresa.nome_empresa}' (CNPJ: {empresa.cnpj})"
-    )
+    # Log da visualização da empresa removido para otimização
     
     return render_template('ver_empresa.html', empresa=empresa)
 
@@ -985,15 +914,7 @@ def editar_empresa(empresa_id):
         
         db.session.commit()
         
-        # Log da edição da empresa
-        activity_logger.log_update(
-            module="empresas",
-            entity_type="Empresa",
-            entity_id=empresa.id,
-            description=f"Editou empresa '{empresa.nome_empresa}' (CNPJ: {empresa.cnpj})",
-            old_values=old_values,
-            new_values=new_values
-        )
+        # Log da edição da empresa removido para otimização
         
         flash('Empresa atualizada com sucesso!', 'success')
         return redirect(url_for('helpdesk.ver_empresa', empresa_id=empresa_id))
@@ -1471,7 +1392,7 @@ def excluir_chamado(chamado_id):
     if user_type == 'administrador':
         return redirect(url_for('helpdesk.dashboard_admin'))
     else:
-        return redirect(url_for('helpdesk.dashboard_tecnico'))
+        return redirect(url_for('helpdesk.listar_chamados'))
 
 
 # APIs movidas para main.py para evitar problemas de roteamento
